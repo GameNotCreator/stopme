@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "description": "Blocks distracting websites during StopMe focus sessions.",
   "minimum_chrome_version": "108",
-  "default_locale": "en",
   "permissions": [
     "tabs",
     "storage",

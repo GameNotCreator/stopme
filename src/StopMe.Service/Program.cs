@@ -91,9 +91,13 @@ internal static class Entry
             builder.Services.Replace(ServiceDescriptor.Singleton<StopMe.Core.Abstractions.IInternetBlockingProvider>(
                 sp => sp.GetRequiredService<HostsFileInternetBlockingProvider>()));
 
-            // Keyword search wrapper (DuckDuckGo HTML endpoint).
-            builder.Services.AddHttpClient("ddg");
-            builder.Services.AddSingleton<IDomainSearchProvider, DuckDuckGoDomainSearchProvider>();
+            // Keyword search: local, on-device catalogue. The DuckDuckGo HTML
+            // provider was removed — it was the only network call in the whole
+            // product and posted the user's raw query to a third party,
+            // contradicting the privacy promise. To opt-back-in to a remote
+            // provider, register an IDomainSearchProvider implementation here
+            // and remove this line.
+            builder.Services.AddSingleton<IDomainSearchProvider, LocalDomainSearchProvider>();
             builder.Services.AddSingleton<ClockDriftDetector>();
             builder.Services.AddSingleton<AntiBypassRunner>();
             // Replace Core's NullClockDriftMonitor with the real one so SessionEngine
@@ -106,6 +110,7 @@ internal static class Entry
             // Handlers — one IOperationHandler registration each.
             builder.Services.AddScoped<IOperationHandler, StatusHandler>();
             builder.Services.AddScoped<IOperationHandler, ActiveSessionsHandler>();
+            builder.Services.AddScoped<IOperationHandler, SessionListHandler>();
             builder.Services.AddScoped<IOperationHandler, StartSessionHandler>();
             builder.Services.AddScoped<IOperationHandler, StopSessionHandler>();
             builder.Services.AddScoped<IOperationHandler, ListBlocklistsHandler>();
@@ -165,10 +170,11 @@ internal static class Entry
         var env = Environment.GetEnvironmentVariable("STOPME_DATA_DIR");
         if (!string.IsNullOrWhiteSpace(env)) return Path.GetFullPath(env);
 
-        if (OperatingSystem.IsWindows() && WindowsServiceHelpers.IsWindowsService())
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "StopMe");
-
-        return Path.Combine(AppContext.BaseDirectory, ".stopme-data");
+        // Always default to %ProgramData%\StopMe so the WinUI app, NativeHost,
+        // and console-mode service share the same auth.token. Without this,
+        // dev-mode boots end up with the service writing to <bin>\.stopme-data
+        // while clients look in %ProgramData% — connection fails silently.
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "StopMe");
     }
 
     private static void ConfigureSerilog(string dataDir)

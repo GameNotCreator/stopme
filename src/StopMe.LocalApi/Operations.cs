@@ -4,6 +4,7 @@ public static class Operations
 {
     public const string Status = "status";
     public const string ActiveSessions = "sessions.active";
+    public const string SessionList = "sessions.list";
     public const string StartSession = "sessions.start";
     public const string StopSession = "sessions.stop";
     public const string ListBlocklists = "blocklists.list";

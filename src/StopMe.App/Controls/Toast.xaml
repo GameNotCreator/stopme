@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="StopMe.App.Controls.MiniToast"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Visibility="Collapsed">
+
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24">
+        <Border Background="{ThemeResource StopMeTextPrimaryBrush}"
+                CornerRadius="999"
+                Padding="20,10">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <c:IconGlyph IconName="check" Size="14" Foreground="White" />
+                <TextBlock x:Name="MessageText"
+                           Text="OK"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="White"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

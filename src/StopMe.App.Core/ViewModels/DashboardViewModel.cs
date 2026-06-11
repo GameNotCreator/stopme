@@ -10,7 +10,8 @@ public partial class DashboardViewModel : ViewModelBase
 {
     private readonly IServiceConnection _connection;
 
-    public DashboardViewModel(IServiceConnection connection)
+    public DashboardViewModel(IServiceConnection connection, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
     }
@@ -53,36 +54,43 @@ public partial class DashboardViewModel : ViewModelBase
             var status = await _connection.GetStatusAsync(ct).ConfigureAwait(false);
             if (status is null)
             {
-                ServiceReachable = false;
-                ServiceStatusLabel = _connection.LastError ?? "StopMe service is not reachable.";
-                SetError(_connection.LastError ?? "Service is unreachable.");
+                await RunOnUiAsync(() =>
+                {
+                    ServiceReachable = false;
+                    ServiceStatusLabel = _connection.LastError ?? "StopMe service is not reachable.";
+                    SetError(_connection.LastError ?? "Service is unreachable.");
+                }).ConfigureAwait(false);
                 return;
             }
 
-            ServiceReachable = true;
-            ServiceVersion = status.ServiceVersion;
-            LastTickUtc = status.LastTickUtc;
-            BootRestoreCompleted = status.BootRestoreCompleted;
-            ServiceStatusLabel = $"Connected — v{status.ServiceVersion}, last tick {status.LastTickUtc:HH:mm:ss} UTC, "
-                + $"{status.ActiveSessionCount} active session(s).";
-
             var sessions = await _connection.GetActiveSessionsAsync(ct).ConfigureAwait(false);
-            ActiveSessions.Clear();
-            foreach (var s in sessions) ActiveSessions.Add(s);
-            OnPropertyChanged(nameof(HasNoActiveSession));
-            OnPropertyChanged(nameof(HasActiveSession));
-
             var blocklists = await _connection.ListBlocklistsAsync(ct).ConfigureAwait(false);
-            BlocklistCount = blocklists.Count;
-
             var bypass = await _connection.GetBypassEventsAsync(ct).ConfigureAwait(false);
-            RecentBypassEvents.Clear();
-            foreach (var ev in bypass.Take(10)) RecentBypassEvents.Add(ev);
-            OnPropertyChanged(nameof(HasNoBypassEvents));
+
+            await RunOnUiAsync(() =>
+            {
+                ServiceReachable = true;
+                ServiceVersion = status.ServiceVersion;
+                LastTickUtc = status.LastTickUtc;
+                BootRestoreCompleted = status.BootRestoreCompleted;
+                ServiceStatusLabel = $"Connected — v{status.ServiceVersion}, last tick {status.LastTickUtc:HH:mm:ss} UTC, "
+                    + $"{status.ActiveSessionCount} active session(s).";
+
+                ActiveSessions.Clear();
+                foreach (var s in sessions) ActiveSessions.Add(s);
+                OnPropertyChanged(nameof(HasNoActiveSession));
+                OnPropertyChanged(nameof(HasActiveSession));
+
+                BlocklistCount = blocklists.Count;
+
+                RecentBypassEvents.Clear();
+                foreach (var ev in bypass.Take(10)) RecentBypassEvents.Add(ev);
+                OnPropertyChanged(nameof(HasNoBypassEvents));
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 }

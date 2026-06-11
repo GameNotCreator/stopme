@@ -1,36 +1,40 @@
-// Wraps chrome.runtime.connectNative with auto-reconnect and a FIFO request queue.
-// Native host processes requests sequentially and replies in order, so we just keep a
-// single in-flight queue and resolve them in arrival order.
+// Wraps chrome.runtime.connectNative with auto-reconnect and a request-id
+// correlation table. Earlier versions resolved promises in FIFO order; on a
+// timeout the queue shifted and the next response landed on the wrong tab's
+// promise (a misblock under high latency). We now generate a per-request id,
+// echo it through the native host (see ExtensionMessageDispatcher), and look
+// up the matching pending entry on response.
 
 const HOST_NAME = 'com.stopme.nativehost';
 const RECONNECT_DELAY_MS = 2000;
 
+let _nextRequestId = 1;
+function nextRequestId() {
+  return `r${(_nextRequestId++).toString(36)}`;
+}
+
 class NativeHost {
   constructor() {
     this._port = null;
-    this._queue = [];        // [{ resolve, reject, timer }]
+    this._pending = new Map();   // id → { resolve, reject, timer }
     this._connecting = null;
-    this._connectedAt = 0;
   }
 
   async send(message, timeoutMs = 4000) {
     await this._ensureConnected();
+    const id = nextRequestId();
+    const tagged = { ...message, requestId: id };
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        // Drop the oldest pending entry if it's ours — there isn't a way to identify
-        // the message-to-response edge without a request id, but the queue is FIFO and
-        // small, so falling back to "first pending" is acceptable.
-        const idx = this._queue.findIndex(e => e.timer === timer);
-        if (idx >= 0) this._queue.splice(idx, 1);
-        reject(new Error('Native host response timed out.'));
+        this._pending.delete(id);
+        reject(new Error(`Native host response timed out (requestId=${id}).`));
       }, timeoutMs);
-      this._queue.push({ resolve, reject, timer });
+      this._pending.set(id, { resolve, reject, timer });
       try {
-        this._port.postMessage(message);
+        this._port.postMessage(tagged);
       } catch (err) {
         clearTimeout(timer);
-        const idx = this._queue.indexOf(this._queue[this._queue.length - 1]);
-        if (idx >= 0) this._queue.splice(idx, 1);
+        this._pending.delete(id);
         reject(err);
       }
     });
@@ -44,10 +48,23 @@ class NativeHost {
       try {
         const port = chrome.runtime.connectNative(HOST_NAME);
         this._port = port;
-        this._connectedAt = Date.now();
 
         port.onMessage.addListener((msg) => {
-          const entry = this._queue.shift();
+          // Look up by id when the host echoes it back. Fall back to
+          // first-pending only if the message has no id at all (older
+          // host builds) — newer host always sets it.
+          const id = msg?.requestId;
+          let entry;
+          if (id && this._pending.has(id)) {
+            entry = this._pending.get(id);
+            this._pending.delete(id);
+          } else if (!id) {
+            const firstId = this._pending.keys().next().value;
+            if (firstId !== undefined) {
+              entry = this._pending.get(firstId);
+              this._pending.delete(firstId);
+            }
+          }
           if (entry) {
             clearTimeout(entry.timer);
             entry.resolve(msg);
@@ -57,17 +74,14 @@ class NativeHost {
         port.onDisconnect.addListener(() => {
           const err = chrome.runtime.lastError;
           this._port = null;
-          // Reject any pending requests.
-          for (const entry of this._queue) {
+          for (const entry of this._pending.values()) {
             clearTimeout(entry.timer);
             entry.reject(new Error(err?.message || 'Native host disconnected.'));
           }
-          this._queue = [];
-          // Auto-reconnect after a short delay.
+          this._pending.clear();
           setTimeout(() => { this._connecting = null; }, RECONNECT_DELAY_MS);
         });
 
-        // The port is considered usable immediately — Chrome buffers until the host attaches.
         resolve();
       } catch (err) {
         this._connecting = null;

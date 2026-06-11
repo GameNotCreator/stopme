@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="StopMe.App.Pages.SessionsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    xmlns:vm="using:StopMe.App.Core.ViewModels"
+    Background="Transparent">
+
+    <ScrollViewer Padding="40,36,40,48" HorizontalScrollMode="Disabled">
+        <Grid MaxWidth="1060" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="28">
+
+                <!-- Page header -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="6">
+                        <TextBlock Text="Sessions" Style="{StaticResource StopMePageTitle}" />
+                        <TextBlock Text="Create, schedule, and review your blocking sessions."
+                                   Style="{StaticResource StopMeBodySecondary}"
+                                   FontSize="14.5"
+                                   MaxWidth="520" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            x:Name="NewSessionBtn"
+                            Style="{StaticResource StopMePrimaryButton}"
+                            Click="OnNewSessionClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <c:IconGlyph IconName="plus" Size="16" ForegroundBrush="White" />
+                            <TextBlock Text="New session" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- Active section -->
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Active" Style="{StaticResource StopMeSectionTitle}" />
+                    <Grid x:Name="ActiveContainer" />
+                </StackPanel>
+
+                <!-- Scheduled section -->
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Scheduled" Style="{StaticResource StopMeSectionTitle}" />
+                    <Border Background="{ThemeResource StopMeBgPrimaryBrush}"
+                            BorderBrush="{ThemeResource StopMeBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="20">
+                        <ItemsControl x:Name="ScheduledList" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Recurring section -->
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Recurring" Style="{StaticResource StopMeSectionTitle}" />
+                    <Border Background="{ThemeResource StopMeBgPrimaryBrush}"
+                            BorderBrush="{ThemeResource StopMeBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="20">
+                        <ItemsControl x:Name="RecurringList" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Past section -->
+                <StackPanel Spacing="14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Past sessions" Style="{StaticResource StopMeSectionTitle}" />
+                        <Button Grid.Column="1"
+                                Style="{StaticResource StopMeGhostButtonSmall}"
+                                Content="Clear history" />
+                    </Grid>
+                    <Border Background="{ThemeResource StopMeBgPrimaryBrush}"
+                            BorderBrush="{ThemeResource StopMeBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="20">
+                        <ItemsControl x:Name="PastList" />
+                    </Border>
+                </StackPanel>
+
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

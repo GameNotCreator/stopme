@@ -23,7 +23,8 @@ public partial class BlockWebsitesViewModel : ViewModelBase
     private readonly IServiceConnection _connection;
     private readonly TimeProvider _clock;
 
-    public BlockWebsitesViewModel(IServiceConnection connection, TimeProvider clock)
+    public BlockWebsitesViewModel(IServiceConnection connection, TimeProvider clock, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
         _clock = clock;
@@ -122,9 +123,9 @@ public partial class BlockWebsitesViewModel : ViewModelBase
         ExceptionInput = string.Empty;
     }
 
-    // Keyword → domains lookup. Hits the service's IDomainSearchProvider
-    // (DuckDuckGo HTML endpoint today). The user can then "Add" each result
-    // into their blocklist.
+    // Keyword → domains lookup. Hits the service's IDomainSearchProvider, which
+    // — when wired to the local heuristic provider — never leaves the machine.
+    // The user can then "Add" each result into their blocklist.
     [RelayCommand]
     public async Task SearchAsync(CancellationToken ct = default)
     {
@@ -135,21 +136,22 @@ public partial class BlockWebsitesViewModel : ViewModelBase
         try
         {
             var hits = await _connection.SearchDomainsAsync(q, 12, ct).ConfigureAwait(false);
-            SearchResults.Clear();
-            foreach (var h in hits)
+            await RunOnUiAsync(() =>
             {
-                // Skip results we've already added so the "Add" buttons stay relevant.
-                if (SelectedSites.Contains(h.Domain, StringComparer.OrdinalIgnoreCase)) continue;
-                SearchResults.Add(h);
-            }
-            if (SearchResults.Count == 0)
-                StatusMessage = $"No results found for '{q}'.";
-            else
-                StatusMessage = $"{SearchResults.Count} domain(s) found.";
+                SearchResults.Clear();
+                foreach (var h in hits)
+                {
+                    if (SelectedSites.Contains(h.Domain, StringComparer.OrdinalIgnoreCase)) continue;
+                    SearchResults.Add(h);
+                }
+                StatusMessage = SearchResults.Count == 0
+                    ? $"No results found for '{q}'."
+                    : $"{SearchResults.Count} domain(s) found.";
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsSearching = false;
+            await RunOnUiAsync(() => IsSearching = false).ConfigureAwait(false);
         }
     }
 
@@ -166,10 +168,15 @@ public partial class BlockWebsitesViewModel : ViewModelBase
         Notify();
     }
 
-    private static string HostsFriendly(string d) =>
-        d.Trim().ToLowerInvariant().Replace("https://", "", StringComparison.Ordinal)
-                                   .Replace("http://", "", StringComparison.Ordinal)
-                                   .TrimStart('w', '.');
+    private static string HostsFriendly(string d)
+    {
+        var v = d.Trim().ToLowerInvariant()
+            .Replace("https://", "", StringComparison.Ordinal)
+            .Replace("http://", "", StringComparison.Ordinal);
+        // TrimStart('w','.') was a bug: it trims any leading 'w' or '.' chars,
+        // so "wired.com" becomes "ired.com". Strip the exact "www." prefix.
+        return v.StartsWith("www.", StringComparison.Ordinal) ? v[4..] : v;
+    }
 
     [RelayCommand]
     public void RemoveException(string site)
@@ -203,7 +210,9 @@ public partial class BlockWebsitesViewModel : ViewModelBase
         {
             var rules = allSites.Select(s => new CreateRuleRequest
             {
-                Type = s.Contains('*') ? "UrlPattern" : "Domain",
+                // "UrlPattern" was a typo — the enum value is Wildcard, and
+                // the service-side parser would reject the rule outright.
+                Type = s.Contains('*') ? "Wildcard" : "Domain",
                 Value = s,
             }).ToList();
             rules.AddRange(Exceptions.Select(e => new CreateRuleRequest
@@ -249,12 +258,15 @@ public partial class BlockWebsitesViewModel : ViewModelBase
                 return;
             }
 
-            LastStartSummary = $"Blocking {allSites.Length} site(s). Ends at {endAtUtc.ToLocalTime():HH:mm}.";
-            StatusMessage = LastStartSummary;
+            await RunOnUiAsync(() =>
+            {
+                LastStartSummary = $"Blocking {allSites.Length} site(s). Ends at {endAtUtc.ToLocalTime():HH:mm}.";
+                StatusMessage = LastStartSummary;
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 

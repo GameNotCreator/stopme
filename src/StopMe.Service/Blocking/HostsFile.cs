@@ -36,8 +36,11 @@ public sealed class HostsFile
 
     // Rewrite the hosts file so the StopMe block contains exactly the supplied
     // domains pointing at 127.0.0.1. Loopback for www. variants is added
-    // automatically. Returns true on success.
-    public bool ApplyBlocklist(IReadOnlyCollection<string> domains)
+    // automatically. Returns (ok, denied): denied=true means we hit an
+    // UnauthorizedAccessException (admin missing). The caller uses that to
+    // decide whether retrying is worth it — repeated writes from a
+    // non-elevated process will just spam errors.
+    public (bool ok, bool denied) ApplyBlocklist(IReadOnlyCollection<string> domains)
     {
         try
         {
@@ -60,21 +63,23 @@ public sealed class HostsFile
             }
             sb.AppendLine(EndMarker);
             WriteAtomic(HostsPath, sb.ToString());
-            return true;
+            return (true, false);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            _logger.LogError(ex, "Hosts file write denied — run StopMe as admin.");
-            return false;
+            // The caller logs once and disables further attempts. Don't log
+            // here — repeated 2s ticks would otherwise produce hundreds of
+            // identical error lines in the rolling log file.
+            return (false, true);
         }
         catch (IOException ex)
         {
             _logger.LogError(ex, "Hosts file write failed.");
-            return false;
+            return (false, false);
         }
     }
 
-    public bool Restore()
+    public (bool ok, bool denied) Restore()
     {
         try
         {
@@ -83,26 +88,25 @@ public sealed class HostsFile
                 var original = File.ReadAllText(_backupPath, Encoding.UTF8);
                 WriteAtomic(HostsPath, original);
                 File.Delete(_backupPath);
-                return true;
+                return (true, false);
             }
             if (File.Exists(HostsPath))
             {
                 var current = File.ReadAllText(HostsPath, Encoding.UTF8);
                 var stripped = StripStopMeBlock(current);
                 WriteAtomic(HostsPath, stripped);
-                return true;
+                return (true, false);
             }
-            return true;
+            return (true, false);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            _logger.LogError(ex, "Hosts file restore denied.");
-            return false;
+            return (false, true);
         }
         catch (IOException ex)
         {
             _logger.LogError(ex, "Hosts file restore failed.");
-            return false;
+            return (false, false);
         }
     }
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="StopMe.App.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    Background="Transparent">
+
+    <ScrollViewer Padding="40,36,40,48" HorizontalScrollMode="Disabled">
+        <Grid MaxWidth="1060" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="24">
+
+                <!-- Page header -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Settings" Style="{StaticResource StopMePageTitle}" />
+                </StackPanel>
+
+                <Grid ColumnSpacing="28">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Sub-nav -->
+                    <StackPanel Grid.Column="0" Spacing="2" x:Name="SubNavStack" VerticalAlignment="Top" />
+
+                    <!-- Content card (single border, sections swapped) -->
+                    <Border Grid.Column="1"
+                            Style="{StaticResource StopMeCardLg}"
+                            MinHeight="420">
+                        <Grid x:Name="SectionContent" />
+                    </Border>
+                </Grid>
+
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

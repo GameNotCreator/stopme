@@ -11,7 +11,8 @@ public partial class TemplatesViewModel : ViewModelBase
     private readonly IServiceConnection _connection;
     private readonly TimeProvider _clock;
 
-    public TemplatesViewModel(IServiceConnection connection, TimeProvider clock)
+    public TemplatesViewModel(IServiceConnection connection, TimeProvider clock, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
         _clock = clock;
@@ -92,15 +93,18 @@ public partial class TemplatesViewModel : ViewModelBase
         try
         {
             var list = await _connection.ListTemplatesAsync(ct).ConfigureAwait(false);
-            Templates.Clear();
-            foreach (var t in list) Templates.Add(t);
-            OnPropertyChanged(nameof(HasNoTemplates));
-            if (Templates.Count > 0 && SelectedTemplate is null)
-                SelectedTemplate = Templates[0];
+            await RunOnUiAsync(() =>
+            {
+                Templates.Clear();
+                foreach (var t in list) Templates.Add(t);
+                OnPropertyChanged(nameof(HasNoTemplates));
+                if (Templates.Count > 0 && SelectedTemplate is null)
+                    SelectedTemplate = Templates[0];
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -126,13 +130,16 @@ public partial class TemplatesViewModel : ViewModelBase
                 return;
             }
 
-            var when = HasScheduledStart ? $" for {startUtc:yyyy-MM-dd HH:mm} UTC" : string.Empty;
-            LastAppliedSummary = $"Applied '{template.DisplayName}'{when} — session {resp.SessionId:N}, {resp.BlocklistIds.Count} blocklist(s) created.";
-            StatusMessage = LastAppliedSummary;
+            await RunOnUiAsync(() =>
+            {
+                var when = HasScheduledStart ? $" for {startUtc:yyyy-MM-dd HH:mm} UTC" : string.Empty;
+                LastAppliedSummary = $"Applied '{template.DisplayName}'{when} — session {resp.SessionId:N}, {resp.BlocklistIds.Count} blocklist(s) created.";
+                StatusMessage = LastAppliedSummary;
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 

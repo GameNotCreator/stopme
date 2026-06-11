@@ -18,7 +18,8 @@ public partial class BlockAppsViewModel : ViewModelBase
     private readonly IServiceConnection _connection;
     private readonly TimeProvider _clock;
 
-    public BlockAppsViewModel(IServiceConnection connection, TimeProvider clock)
+    public BlockAppsViewModel(IServiceConnection connection, TimeProvider clock, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
         _clock = clock;
@@ -81,60 +82,61 @@ public partial class BlockAppsViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            // ---- Running apps ----
             var running = await _connection.GetRunningAppsAsync(ct).ConfigureAwait(false);
-
-            // Preserve current checkbox state across refreshes.
-            var previouslySelected = RunningApps
-                .Where(a => a.IsSelected)
-                .Select(a => a.ProcessName)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            RunningApps.Clear();
-            foreach (var a in running)
-            {
-                RunningApps.Add(new RunningAppItem
-                {
-                    ProcessName = a.ProcessName,
-                    DisplayLabel = string.IsNullOrEmpty(a.MainWindowTitle)
-                        ? a.ProcessName
-                        : $"{a.ProcessName}  —  {a.MainWindowTitle}",
-                    ExecutablePath = a.ExecutablePath,
-                    HasVisibleWindow = a.HasVisibleWindow,
-                    IsSelected = previouslySelected.Contains(a.ProcessName),
-                });
-            }
-
-            // ---- Installed apps (Registry + Start Menu) ----
             var installed = await _connection.GetInstalledAppsAsync(ct).ConfigureAwait(false);
-            var prevInstalledSelected = InstalledApps
-                .Where(a => a.IsSelected)
-                .Select(a => a.ProcessName ?? a.DisplayName)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            InstalledApps.Clear();
-            foreach (var a in installed)
-            {
-                if (string.IsNullOrEmpty(a.ProcessName)) continue; // we need a process name to block on
-                InstalledApps.Add(new InstalledAppItem
-                {
-                    DisplayName = a.DisplayName,
-                    Publisher = a.Publisher,
-                    ProcessName = a.ProcessName,
-                    ExecutablePath = a.ExecutablePath,
-                    Source = a.Source,
-                    IsSelected = prevInstalledSelected.Contains(a.ProcessName!) || prevInstalledSelected.Contains(a.DisplayName),
-                });
-            }
 
-            LastSnapshotUtc = _clock.GetUtcNow().UtcDateTime;
-            OnPropertyChanged(nameof(HasNoApps));
-            OnPropertyChanged(nameof(HasNoInstalled));
-            OnPropertyChanged(nameof(SelectedCount));
-            OnPropertyChanged(nameof(HasSelection));
+            await RunOnUiAsync(() =>
+            {
+                // Preserve current checkbox state across refreshes.
+                var previouslySelected = RunningApps
+                    .Where(a => a.IsSelected)
+                    .Select(a => a.ProcessName)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                RunningApps.Clear();
+                foreach (var a in running)
+                {
+                    RunningApps.Add(new RunningAppItem
+                    {
+                        ProcessName = a.ProcessName,
+                        DisplayLabel = string.IsNullOrEmpty(a.MainWindowTitle)
+                            ? a.ProcessName
+                            : $"{a.ProcessName}  —  {a.MainWindowTitle}",
+                        ExecutablePath = a.ExecutablePath,
+                        HasVisibleWindow = a.HasVisibleWindow,
+                        IsSelected = previouslySelected.Contains(a.ProcessName),
+                    });
+                }
+
+                var prevInstalledSelected = InstalledApps
+                    .Where(a => a.IsSelected)
+                    .Select(a => a.ProcessName ?? a.DisplayName)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                InstalledApps.Clear();
+                foreach (var a in installed)
+                {
+                    if (string.IsNullOrEmpty(a.ProcessName)) continue;
+                    InstalledApps.Add(new InstalledAppItem
+                    {
+                        DisplayName = a.DisplayName,
+                        Publisher = a.Publisher,
+                        ProcessName = a.ProcessName,
+                        ExecutablePath = a.ExecutablePath,
+                        Source = a.Source,
+                        IsSelected = prevInstalledSelected.Contains(a.ProcessName!) || prevInstalledSelected.Contains(a.DisplayName),
+                    });
+                }
+
+                LastSnapshotUtc = _clock.GetUtcNow().UtcDateTime;
+                OnPropertyChanged(nameof(HasNoApps));
+                OnPropertyChanged(nameof(HasNoInstalled));
+                OnPropertyChanged(nameof(SelectedCount));
+                OnPropertyChanged(nameof(HasSelection));
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -251,20 +253,23 @@ public partial class BlockAppsViewModel : ViewModelBase
                 return;
             }
 
-            LastStartSummary = session.Started
-                ? $"Blocking {selectedNames.Length} app(s) for {DurationLabel}. Ends at {endAtUtc.ToLocalTime():HH:mm}."
-                : $"Session scheduled but not started: {session.Warning}";
-            StatusMessage = LastStartSummary;
+            await RunOnUiAsync(() =>
+            {
+                LastStartSummary = session.Started
+                    ? $"Blocking {selectedNames.Length} app(s) for {DurationLabel}. Ends at {endAtUtc.ToLocalTime():HH:mm}."
+                    : $"Session scheduled but not started: {session.Warning}";
+                StatusMessage = LastStartSummary;
 
-            // Clear manual entries to avoid carrying them across blocks; keep running-app
-            // selections so the user can immediately re-block the same set if they want.
-            ManualEntries.Clear();
-            OnPropertyChanged(nameof(SelectedCount));
-            OnPropertyChanged(nameof(HasSelection));
+                // Clear manual entries to avoid carrying them across blocks; keep running-app
+                // selections so the user can immediately re-block the same set if they want.
+                ManualEntries.Clear();
+                OnPropertyChanged(nameof(SelectedCount));
+                OnPropertyChanged(nameof(HasSelection));
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 }

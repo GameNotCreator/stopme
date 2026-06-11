@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="StopMe.App.Pages.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="Transparent"
+    mc:Ignorable="d">
+
+    <ScrollViewer Padding="40,36,40,48" HorizontalScrollMode="Disabled">
+
+        <!-- "Calm" layout — single centered column, max-width 640px. -->
+        <Grid x:Name="OuterGrid" HorizontalAlignment="Center" MaxWidth="640">
+
+            <!-- Either the empty hero or the active session sit here, swapped at runtime -->
+            <Grid x:Name="EmptyHero" Visibility="Visible">
+                <StackPanel Spacing="20" HorizontalAlignment="Center" Padding="0,28,0,0">
+
+                    <!-- Title + subtitle -->
+                    <StackPanel HorizontalAlignment="Center" Spacing="12">
+                        <TextBlock Text="What do you want to block?"
+                                   Style="{StaticResource StopMeHeroSerif}"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Select apps and websites, choose a duration, and StopMe will keep them blocked."
+                                   Style="{StaticResource StopMeBodySecondary}"
+                                   FontSize="15"
+                                   MaxWidth="460"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Summary chips (apps / websites / duration / strict) -->
+                    <ItemsControl x:Name="SummaryChips" HorizontalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+
+                    <!-- Duration -->
+                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                        <TextBlock Text="DURATION"
+                                   Style="{StaticResource StopMeEyebrow}"
+                                   HorizontalAlignment="Center" />
+                        <c:DurationSelector x:Name="Duration" Minutes="60" HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Action row -->
+                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                        <Button x:Name="StartButton"
+                                Style="{StaticResource StopMePrimaryButtonLarge}"
+                                Click="OnStartClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="play" Size="17" ForegroundBrush="White" />
+                                <TextBlock Text="Start Blocking" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="CustomSessionButton"
+                                Style="{StaticResource StopMeSecondaryButtonLarge}"
+                                Content="Create a custom session"
+                                Click="OnCreateCustomClick" />
+                        <c:StrictToggle x:Name="StrictToggle" />
+                    </StackPanel>
+
+                    <!-- Nothing-selected hint -->
+                    <StackPanel x:Name="NothingHint"
+                                Orientation="Horizontal" Spacing="8"
+                                HorizontalAlignment="Center" Visibility="Visible">
+                        <c:IconGlyph IconName="info" Size="14" ForegroundBrush="{ThemeResource StopMeAccentBrush}" />
+                        <TextBlock Text="Nothing selected yet — pick apps or websites first, or start with your saved blocklist."
+                                   Style="{StaticResource StopMeBodySecondary}"
+                                   FontSize="13" />
+                    </StackPanel>
+
+                    <!-- Inline service status -->
+                    <Button x:Name="InlineServiceStatus"
+                            Style="{StaticResource StopMeSecondaryButton}"
+                            HorizontalAlignment="Center"
+                            Margin="0,18,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <c:StatusDot x:Name="InlineStatusDot" Tone="success" />
+                            <TextBlock x:Name="InlineStatusLabel"
+                                       Text="Service connected"
+                                       Style="{StaticResource StopMeBodySecondary}"
+                                       FontSize="12.5"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Active session card — RING variant, big -->
+            <Grid x:Name="ActiveHero" Visibility="Collapsed">
+                <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                    <Border x:Name="ActiveCardBorder"
+                            Style="{StaticResource StopMeCardLg}"
+                            BorderBrush="{ThemeResource StopMeAccentSoft2Brush}">
+                        <StackPanel HorizontalAlignment="Stretch" Spacing="18">
+
+                            <!-- Header row -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                                    <c:StatusDot x:Name="ActiveStatusDot" Tone="success" Pulse="True" />
+                                    <TextBlock x:Name="ActiveSessionName"
+                                               Text="Focus session"
+                                               FontWeight="Bold"
+                                               FontSize="14" />
+                                </StackPanel>
+                                <Border x:Name="ActiveModeBadge"
+                                        Grid.Column="1"
+                                        Style="{StaticResource StopMeBadge}">
+                                    <TextBlock x:Name="ActiveModeBadgeText"
+                                               Text="NORMAL"
+                                               Style="{StaticResource StopMeBadgeText}"
+                                               Foreground="{ThemeResource StopMeTextSecondaryBrush}" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Progress ring -->
+                            <c:StopMeProgressRing x:Name="ActiveRing"
+                                                  RingSize="210"
+                                                  StrokeWidth="11"
+                                                  HorizontalAlignment="Center">
+                                <c:StopMeProgressRing.CenterContentValue>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock x:Name="CountdownText"
+                                                   Text="00:00"
+                                                   Style="{StaticResource StopMeCountdown}"
+                                                   TextAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="remaining"
+                                                   Style="{StaticResource StopMeSmallTertiary}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   TextAlignment="Center"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </c:StopMeProgressRing.CenterContentValue>
+                            </c:StopMeProgressRing>
+
+                            <TextBlock x:Name="ProtectingCaption"
+                                       Style="{StaticResource StopMeBodySecondary}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       Text="StopMe is protecting your focus until 6:00 PM" />
+
+                            <!-- Blocked chips -->
+                            <ItemsControl x:Name="BlockedChips" HorizontalAlignment="Center">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="6" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+
+                            <!-- Stop control -->
+                            <StackPanel HorizontalAlignment="Center">
+                                <Button x:Name="StopButton"
+                                        Style="{StaticResource StopMeGhostButton}"
+                                        Click="OnStopClick"
+                                        Foreground="{ThemeResource StopMeErrorBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <c:IconGlyph IconName="stop" Size="17" ForegroundBrush="{ThemeResource StopMeErrorBrush}" />
+                                        <TextBlock Text="Stop session" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="LockedButton"
+                                        Style="{StaticResource StopMeLockedButton}"
+                                        Visibility="Collapsed"
+                                        Click="OnLockedClick">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <c:IconGlyph IconName="lock" Size="15" ForegroundBrush="{ThemeResource StopMeTextTertiaryBrush}" />
+                                        <TextBlock x:Name="LockedButtonText" Text="Locked until 6:00 PM" />
+                                    </StackPanel>
+                                </Button>
+                                <Border x:Name="LockedTooltip"
+                                        Visibility="Collapsed"
+                                        Background="{ThemeResource StopMeTextPrimaryBrush}"
+                                        CornerRadius="9"
+                                        Padding="12,7"
+                                        Margin="0,6,0,0"
+                                        HorizontalAlignment="Center">
+                                    <TextBlock Text="Strict mode can't be stopped before the timer ends."
+                                               Foreground="White"
+                                               FontSize="12"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Inline service status (calm variant uses this also under the active card) -->
+                    <Button x:Name="ActiveInlineStatus"
+                            Style="{StaticResource StopMeSecondaryButton}"
+                            HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <c:StatusDot x:Name="ActiveInlineStatusDot" Tone="success" />
+                            <TextBlock x:Name="ActiveInlineStatusLabel"
+                                       Text="Service connected"
+                                       Style="{StaticResource StopMeBodySecondary}"
+                                       FontSize="12.5"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="StopMe.App.Controls.EmptyState"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel HorizontalAlignment="Center"
+                Spacing="6"
+                Padding="24,44">
+        <Border CornerRadius="16"
+                Width="52" Height="52"
+                Background="{ThemeResource StopMeBgSecondaryBrush}"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,8">
+            <c:IconGlyph x:Name="Icon"
+                         IconName="info"
+                         Size="24"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center" />
+        </Border>
+        <TextBlock x:Name="TitleText"
+                   Text="Nothing here"
+                   FontWeight="Bold"
+                   FontSize="15"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center" />
+        <TextBlock x:Name="BodyText"
+                   Text=""
+                   Style="{StaticResource StopMeBodySecondary}"
+                   FontSize="13.5"
+                   MaxWidth="340"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center" />
+        <ContentPresenter x:Name="ActionSlot"
+                          HorizontalAlignment="Center"
+                          Margin="0,14,0,0" />
+    </StackPanel>
+</UserControl>

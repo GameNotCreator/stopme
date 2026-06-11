@@ -9,21 +9,22 @@ namespace StopMe.App.Core.ViewModels;
 // Sessions page — surfaces every session bucket in one place:
 //   Active     — the currently running session (or moon empty-state)
 //   Scheduled  — sessions with StartAtUtc in the future
-//   Recurring  — RRULE-backed sessions (with enable toggle)
+//   Recurring  — RRULE-backed sessions
 //   Past       — sessions that already finished / were stopped early
 //
-// Backed by the existing service IPC: GetActiveSessionsAsync gives us "Active",
-// and the persisted FocusSession table will eventually back "Scheduled / Recurring /
-// Past" once a sessions.list IPC op exists. Until then those three are sourced
-// from the demo bucket the prototype ships with so the layout still renders
-// correctly; the empty paths handle that gracefully.
+// Backed by `sessions.active` for the Active bucket and the new `sessions.list`
+// IPC op for Scheduled / Recurring / Past. The prototype demo rows are gone —
+// what the user sees here is what is in the FocusSession table.
 public partial class SessionsViewModel : ViewModelBase
 {
     private readonly IServiceConnection _connection;
+    private readonly TimeProvider _clock;
 
-    public SessionsViewModel(IServiceConnection connection)
+    public SessionsViewModel(IServiceConnection connection, TimeProvider clock, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
+        _clock = clock;
     }
 
     public ObservableCollection<ActiveSessionDto> Active { get; } = new();
@@ -47,40 +48,84 @@ public partial class SessionsViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            var sessions = await _connection.GetActiveSessionsAsync(ct).ConfigureAwait(false);
-            Active.Clear();
-            foreach (var s in sessions) Active.Add(s);
+            var nowUtc = _clock.GetUtcNow().UtcDateTime;
+            var activeDtos = await _connection.GetActiveSessionsAsync(ct).ConfigureAwait(false);
+            var listed = await _connection.GetSessionListAsync(statusFilter: null, ct).ConfigureAwait(false);
 
-            // TODO: replace these prototype demo rows with the real persisted
-            // sessions once a sessions.list IPC op exists. The Phase 1 FocusSession
-            // table already stores everything we need (StartAtUtc, RecurrenceRule,
-            // Status); only the read-path is missing on the wire.
-            if (Scheduled.Count == 0)
-            {
-                Scheduled.Add(new ScheduledSessionRow("Evening study", "Today, 7:00 PM", 90, true, 5, 10));
-            }
-            if (Recurring.Count == 0)
-            {
-                Recurring.Add(new RecurringSessionRow("Work mornings", new[] { "Mon", "Tue", "Wed", "Thu", "Fri" }, "9:00 AM – 12:00 PM", false, 4, 12, Enabled: true));
-                Recurring.Add(new RecurringSessionRow("No late-night gaming", new[] { "Every day" }, "11:00 PM – 7:00 AM", true, 3, 4, Enabled: false));
-            }
-            if (Past.Count == 0)
-            {
-                Past.Add(new PastSessionRow("Deep work",       "Today, 9:00 AM",     120, Completed: true,  StoppedAtMins: 120, Strict: true,  Apps: 4, Sites: 12));
-                Past.Add(new PastSessionRow("Morning focus",   "Yesterday, 8:30 AM",  90, Completed: true,  StoppedAtMins:  90, Strict: false, Apps: 3, Sites: 8));
-                Past.Add(new PastSessionRow("Exam revision",   "Mon, 2:00 PM",       180, Completed: false, StoppedAtMins: 124, Strict: false, Apps: 6, Sites: 15));
-                Past.Add(new PastSessionRow("Deep work",       "Mon, 9:00 AM",       120, Completed: true,  StoppedAtMins: 120, Strict: true,  Apps: 4, Sites: 12));
-            }
+            var scheduledRows = listed
+                .Where(s => !s.IsRecurring)
+                .Where(s => string.Equals(s.Status, "Scheduled", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(s.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                .Where(s => s.StartAtUtc > nowUtc)
+                .OrderBy(s => s.StartAtUtc)
+                .Select(s => new ScheduledSessionRow(
+                    s.Name,
+                    s.StartAtUtc.ToLocalTime().ToString("ddd, t"),
+                    (int)Math.Max(0, (s.EndAtUtc - s.StartAtUtc).TotalMinutes),
+                    string.Equals(s.Mode, "Strict", StringComparison.OrdinalIgnoreCase),
+                    Apps: 0,
+                    Sites: 0))
+                .ToList();
 
-            OnPropertyChanged(nameof(HasActive));
-            OnPropertyChanged(nameof(HasNoActive));
-            OnPropertyChanged(nameof(HasScheduled));
-            OnPropertyChanged(nameof(HasRecurring));
-            OnPropertyChanged(nameof(HasPast));
+            var recurringRows = listed
+                .Where(s => s.IsRecurring)
+                .OrderBy(s => s.Name)
+                .Select(s => new RecurringSessionRow(
+                    s.Name,
+                    SummariseRecurrence(s.RecurrenceRule),
+                    $"{s.StartAtUtc.ToLocalTime():t} – {s.EndAtUtc.ToLocalTime():t}",
+                    string.Equals(s.Mode, "Strict", StringComparison.OrdinalIgnoreCase),
+                    Apps: 0,
+                    Sites: 0,
+                    Enabled: !string.Equals(s.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            var pastRows = listed
+                .Where(s => !s.IsRecurring)
+                .Where(s => string.Equals(s.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(s.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(s.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(s => s.EndAtUtc)
+                .Take(20)
+                .Select(s =>
+                {
+                    var dur = (int)Math.Max(0, (s.EndAtUtc - s.StartAtUtc).TotalMinutes);
+                    return new PastSessionRow(
+                        s.Name,
+                        s.StartAtUtc.ToLocalTime().ToString("ddd, t"),
+                        dur,
+                        Completed: string.Equals(s.Status, "Completed", StringComparison.OrdinalIgnoreCase),
+                        StoppedAtMins: dur,
+                        Strict: string.Equals(s.Mode, "Strict", StringComparison.OrdinalIgnoreCase),
+                        Apps: 0,
+                        Sites: 0);
+                })
+                .ToList();
+
+            await RunOnUiAsync(() =>
+            {
+                Active.Clear();
+                foreach (var s in activeDtos) Active.Add(s);
+
+                Scheduled.Clear();
+                foreach (var r in scheduledRows) Scheduled.Add(r);
+
+                Recurring.Clear();
+                foreach (var r in recurringRows) Recurring.Add(r);
+
+                Past.Clear();
+                foreach (var r in pastRows) Past.Add(r);
+
+                OnPropertyChanged(nameof(HasActive));
+                OnPropertyChanged(nameof(HasNoActive));
+                OnPropertyChanged(nameof(HasScheduled));
+                OnPropertyChanged(nameof(HasRecurring));
+                OnPropertyChanged(nameof(HasPast));
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -97,20 +142,46 @@ public partial class SessionsViewModel : ViewModelBase
         }, ct).ConfigureAwait(false);
         if (resp?.Stopped == true)
         {
-            Active.Remove(current);
-            OnPropertyChanged(nameof(HasActive));
-            OnPropertyChanged(nameof(HasNoActive));
-            StatusMessage = "Session stopped.";
+            await RunOnUiAsync(() =>
+            {
+                Active.Remove(current);
+                OnPropertyChanged(nameof(HasActive));
+                OnPropertyChanged(nameof(HasNoActive));
+                StatusMessage = "Session stopped.";
+            }).ConfigureAwait(false);
         }
         else
         {
-            SetError(resp?.DenialReason ?? _connection.LastError ?? "Could not stop session.");
+            await RunOnUiAsync(() =>
+                SetError(resp?.DenialReason ?? _connection.LastError ?? "Could not stop session.")
+            ).ConfigureAwait(false);
         }
+    }
+
+    private static string SummariseRecurrence(string? rrule)
+    {
+        if (string.IsNullOrWhiteSpace(rrule)) return "—";
+        // Tiny RRULE summary; the full parser is in StopMe.Core.Recurrence and
+        // we deliberately don't share its logic here just to render a chip.
+        var byday = ExtractTag(rrule, "BYDAY=");
+        if (!string.IsNullOrEmpty(byday)) return byday;
+        if (rrule.Contains("FREQ=DAILY", StringComparison.OrdinalIgnoreCase)) return "Every day";
+        if (rrule.Contains("FREQ=WEEKLY", StringComparison.OrdinalIgnoreCase)) return "Weekly";
+        return rrule;
+    }
+
+    private static string? ExtractTag(string rrule, string tag)
+    {
+        var idx = rrule.IndexOf(tag, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return null;
+        var rest = rrule[(idx + tag.Length)..];
+        var end = rest.IndexOf(';');
+        return end < 0 ? rest : rest[..end];
     }
 }
 
 public sealed record ScheduledSessionRow(string Name, string When, int DurationMinutes, bool Strict, int Apps, int Sites);
 
-public sealed record RecurringSessionRow(string Name, IReadOnlyList<string> Days, string Time, bool Strict, int Apps, int Sites, bool Enabled);
+public sealed record RecurringSessionRow(string Name, string Days, string Time, bool Strict, int Apps, int Sites, bool Enabled);
 
 public sealed record PastSessionRow(string Name, string Date, int DurationMinutes, bool Completed, int StoppedAtMins, bool Strict, int Apps, int Sites);

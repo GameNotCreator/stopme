@@ -14,7 +14,8 @@ public partial class StatisticsViewModel : ViewModelBase
     private readonly IServiceConnection _connection;
     private readonly IStatsCsvWriter _csv;
 
-    public StatisticsViewModel(IServiceConnection connection, IStatsCsvWriter csv)
+    public StatisticsViewModel(IServiceConnection connection, IStatsCsvWriter csv, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
         _csv = csv;
@@ -90,7 +91,7 @@ public partial class StatisticsViewModel : ViewModelBase
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -138,29 +139,35 @@ public partial class StatisticsViewModel : ViewModelBase
         var resp = await _connection.GetStatsAsync(SelectedPeriod, ct).ConfigureAwait(false);
         if (resp is null)
         {
-            SetError(_connection.LastError ?? "Service is unreachable.");
-            Daily.Clear();
-            TopDistractions.Clear();
+            await RunOnUiAsync(() =>
+            {
+                SetError(_connection.LastError ?? "Service is unreachable.");
+                Daily.Clear();
+                TopDistractions.Clear();
+            }).ConfigureAwait(false);
             return;
         }
 
-        SessionsCompleted = resp.Summary.SessionsCompleted;
-        FocusMinutes = resp.Summary.FocusMinutes;
-        WebsiteBlockCount = resp.Summary.WebsiteBlockCount;
-        AppBlockCount = resp.Summary.AppBlockCount;
-        BypassAttemptCount = resp.Summary.BypassAttemptCount;
-        ProductiveDayStreak = resp.Summary.ProductiveDayStreak;
-        WindowFromUtc = resp.FromUtc;
-        WindowToUtc = resp.ToUtc;
+        await RunOnUiAsync(() =>
+        {
+            SessionsCompleted = resp.Summary.SessionsCompleted;
+            FocusMinutes = resp.Summary.FocusMinutes;
+            WebsiteBlockCount = resp.Summary.WebsiteBlockCount;
+            AppBlockCount = resp.Summary.AppBlockCount;
+            BypassAttemptCount = resp.Summary.BypassAttemptCount;
+            ProductiveDayStreak = resp.Summary.ProductiveDayStreak;
+            WindowFromUtc = resp.FromUtc;
+            WindowToUtc = resp.ToUtc;
 
-        Daily.Clear();
-        foreach (var b in resp.Daily) Daily.Add(b);
+            Daily.Clear();
+            foreach (var b in resp.Daily) Daily.Add(b);
 
-        TopDistractions.Clear();
-        foreach (var t in resp.TopDistractions) TopDistractions.Add(t);
+            TopDistractions.Clear();
+            foreach (var t in resp.TopDistractions) TopDistractions.Add(t);
 
-        if (!string.Equals(resp.PrivacyMode, SelectedPrivacyMode, StringComparison.OrdinalIgnoreCase))
-            SelectedPrivacyMode = resp.PrivacyMode;
+            if (!string.Equals(resp.PrivacyMode, SelectedPrivacyMode, StringComparison.OrdinalIgnoreCase))
+                SelectedPrivacyMode = resp.PrivacyMode;
+        }).ConfigureAwait(false);
     }
 
     private async Task LoadPrivacyAsync(CancellationToken ct)

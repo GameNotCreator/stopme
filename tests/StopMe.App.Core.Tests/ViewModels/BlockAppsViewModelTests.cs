@@ -72,8 +72,10 @@ public class BlockAppsViewModelTests
         await vm.StartBlockingAsync();
 
         _fake.Created.Should().ContainSingle();
+        // VM appends .exe to process names that lack the suffix so the
+        // WindowsProcessName rule matches what the watcher actually reports.
         _fake.Created[0].Rules!.Select(r => r.Value)
-            .Should().BeEquivalentTo(new[] { "steam", "discord.exe" });
+            .Should().BeEquivalentTo(new[] { "steam.exe", "discord.exe" });
         _fake.CreateSessionRequests.Should().ContainSingle();
         var session = _fake.CreateSessionRequests[0];
         session.Mode.Should().Be("Strict");

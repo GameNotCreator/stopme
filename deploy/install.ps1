@@ -118,7 +118,10 @@ function Install-Service {
     }
 
     Write-Host "Registering $ServiceName ..."
-    $binPath = "`"$ExePath`""
+    # Embed --data-dir into the service binPath so a non-default $DataDir
+    # actually reaches the service. Previously the installer logged a fake
+    # $DataDir but the service still defaulted to %ProgramData%\StopMe.
+    $binPath = "`"$ExePath`" --data-dir `"$DataDir`""
     & sc.exe create $ServiceName binPath= $binPath start= auto DisplayName= "StopMe Focus Service" | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "sc.exe create failed (exit $LASTEXITCODE)." }
 

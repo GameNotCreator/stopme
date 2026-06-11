@@ -34,6 +34,9 @@ public sealed class StopMeLocalApiClient : IAsyncDisposable
     public Task<LocalApiResponse?> ActiveSessionsAsync(CancellationToken ct = default) =>
         SendAsync(LocalApiRequest.For(Operations.ActiveSessions, _token), ct);
 
+    public Task<LocalApiResponse?> SessionListAsync(SessionListRequest request, CancellationToken ct = default) =>
+        SendAsync(LocalApiRequest.For(Operations.SessionList, request, _token), ct);
+
     public Task<LocalApiResponse?> StartSessionAsync(Guid sessionId, CancellationToken ct = default) =>
         SendAsync(LocalApiRequest.For(Operations.StartSession, new StartSessionRequest { SessionId = sessionId }, _token), ct);
 

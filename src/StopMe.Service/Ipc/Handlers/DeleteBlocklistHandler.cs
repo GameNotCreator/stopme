@@ -37,6 +37,13 @@ public sealed class DeleteBlocklistHandler : IOperationHandler
         if (dto is null || dto.Id == Guid.Empty)
             return LocalApiResponse.Error(ErrorCodes.BadRequest, "Missing or invalid id.");
 
+        // Previously: the handler called DeleteAsync without first checking
+        // existence, so a request with an unknown ID returned Ok(). That hid
+        // bugs in the client (e.g. a stale ID being silently swallowed).
+        var existing = await _repo.GetByIdAsync(dto.Id, ct).ConfigureAwait(false);
+        if (existing is null)
+            return LocalApiResponse.Error(ErrorCodes.NotFound, $"Blocklist {dto.Id} not found.");
+
         var decision = _guard.CanDeleteBlocklist(dto.Id, _state.Current.ActiveSessions);
         if (!decision.IsAllowed)
         {

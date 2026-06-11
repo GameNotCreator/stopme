@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="StopMe.App.Pages.StatisticsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    xmlns:vm="using:StopMe.App.Core.ViewModels"
+    Background="Transparent">
+
+    <ScrollViewer Padding="40,36,40,48" HorizontalScrollMode="Disabled">
+        <Grid MaxWidth="1060" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="24">
+
+                <!-- Page header -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="6">
+                        <TextBlock Text="Statistics" Style="{StaticResource StopMePageTitle}" />
+                        <TextBlock Text="What StopMe helped you avoid this week."
+                                   Style="{StaticResource StopMeBodySecondary}"
+                                   FontSize="14.5"
+                                   MaxWidth="520" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                        <Button Style="{StaticResource StopMeSecondaryButton}" Click="OnExportClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="download" Size="16" ForegroundBrush="{ThemeResource StopMeTextPrimaryBrush}" />
+                                <TextBlock Text="Export" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource StopMeGhostDangerButton}" Content="Reset" Click="OnResetClick" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Period picker (still useful — Today / 7 / 30 / All time) -->
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="PERIOD" Style="{StaticResource StopMeEyebrow}" VerticalAlignment="Center" />
+                    <ComboBox x:Name="PeriodCombo"
+                              MinWidth="200"
+                              ItemsSource="{x:Bind ViewModel.AvailablePeriodList}"
+                              SelectedItem="{x:Bind ViewModel.SelectedPeriod, Mode=TwoWay}"
+                              SelectionChanged="OnPeriodChanged" />
+                </StackPanel>
+
+                <!-- 3-column metric cards grid -->
+                <Grid ColumnSpacing="16" RowSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Row 1 -->
+                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource StopMeCard}" Padding="20">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="clock" Size="14" ForegroundBrush="{ThemeResource StopMeTextSecondaryBrush}" />
+                                <TextBlock Text="Focus time"
+                                           Style="{StaticResource StopMeBodySecondary}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                            <TextBlock x:Name="FocusTimeValue"
+                                       Text="0 min"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       CharacterSpacing="-20" />
+                            <TextBlock x:Name="FocusTimeSub"
+                                       Text="this week"
+                                       Style="{StaticResource StopMeSmallTertiary}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource StopMeCard}" Padding="20">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="check" Size="14" ForegroundBrush="{ThemeResource StopMeTextSecondaryBrush}" />
+                                <TextBlock Text="Sessions completed"
+                                           Style="{StaticResource StopMeBodySecondary}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                            <TextBlock x:Name="SessionsValue"
+                                       Text="0"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       CharacterSpacing="-20" />
+                            <TextBlock Text="all time"
+                                       Style="{StaticResource StopMeSmallTertiary}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource StopMeCard}" Padding="20">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="flame" Size="14" ForegroundBrush="{ThemeResource StopMeTextSecondaryBrush}" />
+                                <TextBlock Text="Current streak"
+                                           Style="{StaticResource StopMeBodySecondary}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                            <TextBlock x:Name="StreakValue"
+                                       Text="0 days"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       CharacterSpacing="-20" />
+                            <TextBlock Text="with at least one session"
+                                       Style="{StaticResource StopMeSmallTertiary}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Row 2 -->
+                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource StopMeCard}" Padding="20">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="apps" Size="14" ForegroundBrush="{ThemeResource StopMeTextSecondaryBrush}" />
+                                <TextBlock Text="App launches blocked"
+                                           Style="{StaticResource StopMeBodySecondary}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                            <TextBlock x:Name="AppBlocksValue"
+                                       Text="0"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       CharacterSpacing="-20" />
+                            <TextBlock Text="this week"
+                                       Style="{StaticResource StopMeSmallTertiary}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource StopMeCard}" Padding="20">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="globe" Size="14" ForegroundBrush="{ThemeResource StopMeTextSecondaryBrush}" />
+                                <TextBlock Text="Site visits blocked"
+                                           Style="{StaticResource StopMeBodySecondary}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                            <TextBlock x:Name="SiteBlocksValue"
+                                       Text="0"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       CharacterSpacing="-20" />
+                            <TextBlock Text="this week"
+                                       Style="{StaticResource StopMeSmallTertiary}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource StopMeCard}" Padding="20">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="alert" Size="14" ForegroundBrush="{ThemeResource StopMeTextSecondaryBrush}" />
+                                <TextBlock Text="Top distraction"
+                                           Style="{StaticResource StopMeBodySecondary}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                            <TextBlock x:Name="TopDistractionValue"
+                                       Text="—"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       CharacterSpacing="-20"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="TopDistractionSub"
+                                       Text=""
+                                       Style="{StaticResource StopMeSmallTertiary}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Charts grid: 1.5fr focus-by-day / 1fr (category bar + top blocked) -->
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Focus time by day -->
+                    <Border Grid.Column="0" Style="{StaticResource StopMeCard}" Padding="24">
+                        <StackPanel Spacing="14">
+                            <TextBlock Text="Focus time by day" Style="{StaticResource StopMeSectionTitle}" />
+                            <Grid x:Name="FocusByDayBars" Height="200" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Right column: category bar + top blocked -->
+                    <StackPanel Grid.Column="1" Spacing="16">
+                        <Border Style="{StaticResource StopMeCard}" Padding="20">
+                            <StackPanel Spacing="14">
+                                <TextBlock Text="Blocks by category" Style="{StaticResource StopMeSectionTitle}" />
+                                <Border Height="10" CornerRadius="99" Background="{ThemeResource StopMeBgTertiaryBrush}">
+                                    <Grid x:Name="CategorySegmented" />
+                                </Border>
+                                <ItemsControl x:Name="CategoryLegend" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource StopMeCard}" Padding="20">
+                            <StackPanel Spacing="14">
+                                <TextBlock Text="Top blocked" Style="{StaticResource StopMeSectionTitle}" />
+                                <ItemsControl x:Name="TopBlockedList" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Status / error -->
+                <Border x:Name="ErrorCard"
+                        Visibility="Collapsed"
+                        Style="{StaticResource StopMeCard}"
+                        Background="{ThemeResource StopMeErrorSoftBrush}">
+                    <TextBlock x:Name="ErrorText"
+                               Style="{StaticResource StopMeBody}"
+                               Foreground="{ThemeResource StopMeErrorBrush}" />
+                </Border>
+
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

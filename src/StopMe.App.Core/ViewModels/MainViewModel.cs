@@ -10,7 +10,8 @@ public partial class MainViewModel : ViewModelBase
 {
     private readonly IServiceConnection _connection;
 
-    public MainViewModel(IServiceConnection connection)
+    public MainViewModel(IServiceConnection connection, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
         _connection.StateChanged += OnConnectionStateChanged;
@@ -66,13 +67,19 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnConnectionStateChanged(object? sender, EventArgs e)
     {
-        ConnectionState = _connection.State;
-        ConnectionLabel = _connection.State switch
+        // The connection state event can fire from a background thread
+        // (e.g. EnsureConnectedAsync continuation). Marshal the property
+        // updates to the UI thread so x:Bind / classic Binding don't crash.
+        _ = Dispatcher.InvokeAsync(() =>
         {
-            Services.ConnectionState.Connected => "Service connected",
-            Services.ConnectionState.Connecting => "Connecting to StopMe service…",
-            Services.ConnectionState.Failed => _connection.LastError ?? "Service issue — click for details",
-            _ => "Disconnected",
-        };
+            ConnectionState = _connection.State;
+            ConnectionLabel = _connection.State switch
+            {
+                Services.ConnectionState.Connected => "Service connected",
+                Services.ConnectionState.Connecting => "Connecting to StopMe service…",
+                Services.ConnectionState.Failed => _connection.LastError ?? "Service issue — click for details",
+                _ => "Disconnected",
+            };
+        });
     }
 }

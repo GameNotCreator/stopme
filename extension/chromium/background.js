@@ -41,9 +41,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 const BLOCKED_PAGE = chrome.runtime.getURL('blocked/blocked.html');
 
-// Soft cache to avoid spamming the host with redirects when the tab redirects through
-// the blocked page (which itself navigates). 5 seconds is plenty.
-const recentlyBlocked = new Map();
+// Soft cache to avoid spamming the host on a tight retry loop. We remember
+// the most recent decision per tab (NOT just the URL+time) and reuse it: a
+// cached "block" must still redirect — otherwise hitting the same URL twice
+// within 5 s would let it through. The cache only short-circuits the IPC
+// round-trip, never the enforcement.
+const recentDecisions = new Map();
 const RECENT_TTL_MS = 5_000;
 
 function isHttp(url) {
@@ -71,15 +74,25 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   if (!isHttp(details.url)) return;
   if (isOwnBlockedPage(details.url)) return;
 
-  const cached = recentlyBlocked.get(details.tabId);
+  const cached = recentDecisions.get(details.tabId);
   if (cached && cached.url === details.url && Date.now() - cached.at < RECENT_TTL_MS) {
+    // Cache hit. Reuse the decision instead of re-querying the host.
+    if (cached.blocked) {
+      await chrome.tabs.update(details.tabId, { url: buildBlockedUrl(details.url, cached.decision) });
+    }
     return;
   }
 
   try {
     const response = await checkUrl(details.url, details.tabId, 'chromium');
-    if (response?.type === 'CHECK_URL_RESULT' && response.blocked === true) {
-      recentlyBlocked.set(details.tabId, { url: details.url, at: Date.now() });
+    const blocked = response?.type === 'CHECK_URL_RESULT' && response.blocked === true;
+    recentDecisions.set(details.tabId, {
+      url: details.url,
+      at: Date.now(),
+      blocked,
+      decision: blocked ? response : null,
+    });
+    if (blocked) {
       await chrome.tabs.update(details.tabId, { url: buildBlockedUrl(details.url, response) });
     }
   } catch (err) {
@@ -90,5 +103,5 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  recentlyBlocked.delete(tabId);
+  recentDecisions.delete(tabId);
 });

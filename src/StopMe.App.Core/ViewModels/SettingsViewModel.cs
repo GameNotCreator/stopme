@@ -9,7 +9,8 @@ public partial class SettingsViewModel : ViewModelBase
 {
     private readonly IUserSettingsStore _store;
 
-    public SettingsViewModel(IUserSettingsStore store)
+    public SettingsViewModel(IUserSettingsStore store, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _store = store;
         var state = _store.Load();

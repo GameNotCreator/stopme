@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="StopMe.App.Pages.BlockWebsitesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    xmlns:vm="using:StopMe.App.Core.ViewModels"
+    Background="Transparent">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" Padding="40,36,40,16" HorizontalScrollMode="Disabled">
+            <Grid MaxWidth="1060" HorizontalAlignment="Stretch">
+
+                <StackPanel Spacing="28">
+
+                    <!-- Page header -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Block Websites" Style="{StaticResource StopMePageTitle}" />
+                        <TextBlock Text="Block specific sites, whole categories, or anything matching a pattern."
+                                   Style="{StaticResource StopMeBodySecondary}"
+                                   FontSize="14.5"
+                                   MaxWidth="520"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Two-column grid -->
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.6*" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- ===== Left column ===== -->
+                        <StackPanel Grid.Column="0" Spacing="20">
+
+                            <!-- Add site card -->
+                            <Border Style="{StaticResource StopMeCard}" Padding="24">
+                                <StackPanel Spacing="12">
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 x:Name="SiteInputBox"
+                                                 Style="{StaticResource StopMeTextBox}"
+                                                 PlaceholderText="Add a website, domain, or wildcard — e.g. youtube.com"
+                                                 KeyDown="OnSiteInputKeyDown" />
+                                        <Button Grid.Column="1"
+                                                Style="{StaticResource StopMePrimaryButton}"
+                                                Click="OnAddSiteClick">
+                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <c:IconGlyph IconName="plus" Size="15" ForegroundBrush="White" />
+                                                <TextBlock Text="Add" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="Try:"
+                                                   Style="{StaticResource StopMeSmallTertiary}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center" />
+                                        <ItemsControl x:Name="ExampleChips">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="6" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Search by keyword (DuckDuckGo) -->
+                            <Border Style="{StaticResource StopMeCard}" Padding="24">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Find domains by keyword" Style="{StaticResource StopMeCardTitle}" />
+                                        <TextBlock Text="Type a topic (e.g. ‘gaming forums’, ‘pirate streaming’) and StopMe will look up matching domains."
+                                                   Style="{StaticResource StopMeBodySecondary}"
+                                                   FontSize="13"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 x:Name="SearchBox"
+                                                 Style="{StaticResource StopMeTextBox}"
+                                                 PlaceholderText="e.g. anime streaming sites"
+                                                 KeyDown="OnSearchKeyDown" />
+                                        <Button Grid.Column="1"
+                                                Style="{StaticResource StopMeSecondaryButton}"
+                                                Click="OnSearchClick">
+                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <c:IconGlyph IconName="search" Size="15" ForegroundBrush="{ThemeResource StopMeTextPrimaryBrush}" />
+                                                <TextBlock x:Name="SearchButtonText" Text="Search" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                    <ItemsControl x:Name="SearchResultsList" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Blocked websites card -->
+                            <Border Background="{ThemeResource StopMeBgPrimaryBrush}"
+                                    BorderBrush="{ThemeResource StopMeBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="20">
+                                <StackPanel>
+                                    <Grid Padding="20,16" BorderBrush="{ThemeResource StopMeBorderBrush}" BorderThickness="0,0,0,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Blocked websites" Style="{StaticResource StopMeCardTitle}" />
+                                        <Border x:Name="SitesBadge" Grid.Column="1" Style="{StaticResource StopMeBadge}">
+                                            <TextBlock x:Name="SitesBadgeText"
+                                                       Text="0"
+                                                       Style="{StaticResource StopMeBadgeText}"
+                                                       Foreground="{ThemeResource StopMeTextSecondaryBrush}" />
+                                        </Border>
+                                    </Grid>
+                                    <c:EmptyState x:Name="SitesEmpty"
+                                                  IconName="globe"
+                                                  Title="No websites added yet."
+                                                  Body="Add a site above, or block a whole category in one click." />
+                                    <ItemsControl x:Name="SitesList" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- ===== Right column ===== -->
+                        <StackPanel Grid.Column="1" Spacing="16">
+
+                            <!-- Quick categories -->
+                            <Border Style="{StaticResource StopMeCard}" Padding="20">
+                                <StackPanel Spacing="14">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Quick categories" Style="{StaticResource StopMeCardTitle}" />
+                                        <TextBlock Text="Block a whole group of sites in one click."
+                                                   Style="{StaticResource StopMeSmall}"
+                                                   FontSize="12.5" />
+                                    </StackPanel>
+                                    <ItemsControl x:Name="CategoryChips">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <c:WrapPanel HorizontalSpacing="0" VerticalSpacing="0" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                    <StackPanel x:Name="CategoryCoveredHint"
+                                                Visibility="Collapsed"
+                                                Orientation="Horizontal"
+                                                Spacing="6">
+                                        <c:IconGlyph IconName="check" Size="13" ForegroundBrush="{ThemeResource StopMeSuccessBrush}" />
+                                        <TextBlock x:Name="CategoryCoveredText"
+                                                   Text="0 sites covered by categories"
+                                                   Style="{StaticResource StopMeBodySecondary}"
+                                                   FontSize="12.5" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Exceptions -->
+                            <Border Style="{StaticResource StopMeCard}" Padding="20">
+                                <StackPanel Spacing="12">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Exceptions" Style="{StaticResource StopMeCardTitle}" />
+                                        <TextBlock Text="Allow these websites even during a full block."
+                                                   Style="{StaticResource StopMeSmall}"
+                                                   FontSize="12.5"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 x:Name="ExceptionBox"
+                                                 Style="{StaticResource StopMeTextBox}"
+                                                 PlaceholderText="e.g. docs.google.com"
+                                                 KeyDown="OnExceptionInputKeyDown" />
+                                        <Button Grid.Column="1"
+                                                Style="{StaticResource StopMeSecondaryButtonSmall}"
+                                                Content="Allow"
+                                                Click="OnAddExceptionClick" />
+                                    </Grid>
+                                    <ItemsControl x:Name="ExceptionChipsList">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <c:WrapPanel HorizontalSpacing="0" VerticalSpacing="0" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Status banner -->
+                    <Border x:Name="StatusBanner"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource StopMeAccentSoftBrush}"
+                            CornerRadius="14"
+                            Padding="16,12">
+                        <TextBlock x:Name="StatusBannerText"
+                                   Style="{StaticResource StopMeBody}"
+                                   FontSize="13.5"
+                                   Foreground="{ThemeResource StopMeAccentTextBrush}" />
+                    </Border>
+
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Sticky action bar -->
+        <Border Grid.Row="1"
+                Style="{StaticResource StopMeStickyBar}"
+                Margin="40,16,40,28">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="DURATION"
+                               Style="{StaticResource StopMeEyebrow}"
+                               VerticalAlignment="Center" />
+                    <c:DurationSelector x:Name="StickyDuration" Compact="True" Minutes="60" />
+                </StackPanel>
+                <c:StrictToggle Grid.Column="1" x:Name="StickyStrict" />
+                <Button Grid.Column="2"
+                        x:Name="StartBlockingBtn"
+                        Style="{StaticResource StopMePrimaryButton}"
+                        Click="OnStartClick"
+                        IsEnabled="False">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <c:IconGlyph IconName="play" Size="16" ForegroundBrush="White" />
+                        <TextBlock x:Name="StartBlockingText" Text="Select websites to block" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

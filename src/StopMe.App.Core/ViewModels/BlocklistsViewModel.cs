@@ -10,7 +10,8 @@ public partial class BlocklistsViewModel : ViewModelBase
 {
     private readonly IServiceConnection _connection;
 
-    public BlocklistsViewModel(IServiceConnection connection)
+    public BlocklistsViewModel(IServiceConnection connection, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
         Modes = new[] { "Blacklist", "Allowlist", "FullInternet" };
@@ -43,14 +44,17 @@ public partial class BlocklistsViewModel : ViewModelBase
         try
         {
             var lists = await _connection.ListBlocklistsAsync(ct).ConfigureAwait(false);
-            Blocklists.Clear();
-            foreach (var b in lists) Blocklists.Add(b);
-            if (Blocklists.Count > 0 && SelectedBlocklist is null)
-                SelectedBlocklist = Blocklists[0];
+            await RunOnUiAsync(() =>
+            {
+                Blocklists.Clear();
+                foreach (var b in lists) Blocklists.Add(b);
+                if (Blocklists.Count > 0 && SelectedBlocklist is null)
+                    SelectedBlocklist = Blocklists[0];
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -73,18 +77,23 @@ public partial class BlocklistsViewModel : ViewModelBase
 
             if (created is null)
             {
-                SetError(_connection.LastError ?? "Service rejected the blocklist.");
+                await RunOnUiAsync(() =>
+                    SetError(_connection.LastError ?? "Service rejected the blocklist.")
+                ).ConfigureAwait(false);
                 return;
             }
 
-            Blocklists.Add(created);
-            SelectedBlocklist = created;
-            NewName = string.Empty;
-            NewRulesText = string.Empty;
+            await RunOnUiAsync(() =>
+            {
+                Blocklists.Add(created);
+                SelectedBlocklist = created;
+                NewName = string.Empty;
+                NewRulesText = string.Empty;
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -104,15 +113,20 @@ public partial class BlocklistsViewModel : ViewModelBase
             var ok = await _connection.DeleteBlocklistAsync(SelectedBlocklist.Id, ct).ConfigureAwait(false);
             if (!ok)
             {
-                SetError(_connection.LastError ?? "Service rejected the deletion.");
+                await RunOnUiAsync(() =>
+                    SetError(_connection.LastError ?? "Service rejected the deletion.")
+                ).ConfigureAwait(false);
                 return;
             }
-            Blocklists.Remove(SelectedBlocklist);
-            SelectedBlocklist = Blocklists.FirstOrDefault();
+            await RunOnUiAsync(() =>
+            {
+                Blocklists.Remove(SelectedBlocklist);
+                SelectedBlocklist = Blocklists.FirstOrDefault();
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 

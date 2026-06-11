@@ -69,6 +69,7 @@ public class ServiceWorkerTickTests
             host.Services.GetRequiredService<ServiceState>(),
             host.Clock,
             host.Services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<ServiceOptions>>(),
+            host.Services.GetRequiredService<Core.Abstractions.IInternetBlockingProvider>(),
             NullLogger<ServiceWorker>.Instance);
 
         await worker.TickAsync(default);
@@ -137,6 +138,7 @@ public class ServiceWorkerTickTests
             host.Services.GetRequiredService<ServiceState>(),
             host.Clock,
             host.Services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<ServiceOptions>>(),
+            host.Services.GetRequiredService<Core.Abstractions.IInternetBlockingProvider>(),
             NullLogger<ServiceWorker>.Instance);
 
         await worker.TickAsync(default);

@@ -146,12 +146,27 @@ public sealed class SessionEngine : ISessionEngine
     public async Task CompleteExpiredSessionsAsync(DateTime nowUtc, CancellationToken ct = default)
     {
         var enabled = await _sessions.GetEnabledAsync(ct).ConfigureAwait(false);
+        var driftActive = _clockDrift.IsClockDriftActive;
         foreach (var s in enabled)
         {
             if (s.IsRecurring) continue;
             if (s.Status is SessionStatus.Completed or SessionStatus.Cancelled) continue;
             if (s.EndAtUtc <= nowUtc)
             {
+                // Anti-bypass: while the clock-drift flag is set, refuse to
+                // auto-complete a strict session whose EndAtUtc is in the
+                // past. Otherwise a single forward jump of the wall-clock
+                // would silently end the strict block before AntiBypassRunner
+                // ever records a BypassEvent (see the corresponding fix in
+                // AntiBypassRunner.RunAsync + ServiceWorker.TickAsync).
+                if (driftActive && s.Mode == SessionMode.Strict)
+                {
+                    _logger.LogWarning(
+                        "Skipping auto-completion of strict session {SessionId} ({Name}) — clock drift is active.",
+                        s.Id, s.Name);
+                    continue;
+                }
+
                 await _sessions.UpdateStatusAsync(s.Id, SessionStatus.Completed, ct).ConfigureAwait(false);
                 _logger.LogInformation("Session {SessionId} ({Name}) completed at {NowUtc:o}", s.Id, s.Name, nowUtc);
                 await RecordSessionEventAsync(s, UsageEventType.SessionCompleted, nowUtc, ct).ConfigureAwait(false);
@@ -261,6 +276,12 @@ public sealed class SessionEngine : ISessionEngine
     private static ActiveSessionInstance? ResolveRecurring(FocusSession s, DateTime nowUtc, Guid[] blocklistIds)
     {
         if (string.IsNullOrWhiteSpace(s.RecurrenceRule)) return null;
+        // ResolveOneShot honours Status; ResolveRecurring used to silently
+        // ignore it, which meant a user-Cancelled (or Failed) recurring
+        // session would re-fire on the next tick. StopSessionAsync sets
+        // Status to Cancelled — that has to win here too, otherwise stopping
+        // a recurring soft session is a no-op.
+        if (s.Status is SessionStatus.Cancelled or SessionStatus.Failed) return null;
         if (!RecurrenceParser.TryParse(s.RecurrenceRule, out var pattern) || pattern is null) return null;
 
         var tz = ResolveTimeZone(s.TimeZoneId);

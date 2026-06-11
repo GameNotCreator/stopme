@@ -25,47 +25,53 @@ public sealed class ExtensionMessageDispatcher
         ArgumentNullException.ThrowIfNull(request);
 
         if (request.RootElement.ValueKind != JsonValueKind.Object)
-            return Error(ErrorCodes.MalformedRequest, "Expected a JSON object.");
+            return Error(null, ErrorCodes.MalformedRequest, "Expected a JSON object.");
 
         var type = request.RootElement.ReadString("type");
+        // requestId is optional on the wire (back-compat with older extensions
+        // that didn't send it). When present, every response mirrors it back
+        // so the extension can correlate without relying on FIFO order.
+        var requestId = request.RootElement.ReadString("requestId");
+
         if (string.IsNullOrEmpty(type))
-            return Error(ErrorCodes.MalformedRequest, "Missing 'type' field.");
+            return Error(requestId, ErrorCodes.MalformedRequest, "Missing 'type' field.");
 
         try
         {
             switch (type)
             {
                 case MessageTypes.CheckUrl:
-                    return await HandleCheckUrlAsync(request.RootElement, ct).ConfigureAwait(false);
+                    return await HandleCheckUrlAsync(request.RootElement, requestId, ct).ConfigureAwait(false);
                 case MessageTypes.GetStatus:
-                    return await HandleStatusAsync(ct).ConfigureAwait(false);
+                    return await HandleStatusAsync(requestId, ct).ConfigureAwait(false);
                 case MessageTypes.GetActiveSessions:
-                    return await HandleActiveSessionsAsync(ct).ConfigureAwait(false);
+                    return await HandleActiveSessionsAsync(requestId, ct).ConfigureAwait(false);
                 case MessageTypes.Heartbeat:
-                    return await HandleHeartbeatAsync(request.RootElement, ct).ConfigureAwait(false);
+                    return await HandleHeartbeatAsync(request.RootElement, requestId, ct).ConfigureAwait(false);
                 default:
-                    return Error(ErrorCodes.UnknownType, $"Unknown message type '{type}'.");
+                    return Error(requestId, ErrorCodes.UnknownType, $"Unknown message type '{type}'.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Dispatch failed for type {Type}", type);
-            return Error(ErrorCodes.Internal, ex.Message);
+            return Error(requestId, ErrorCodes.Internal, ex.Message);
         }
     }
 
-    private async Task<object> HandleCheckUrlAsync(JsonElement root, CancellationToken ct)
+    private async Task<object> HandleCheckUrlAsync(JsonElement root, string? requestId, CancellationToken ct)
     {
         var dto = root.ReadAs<CheckUrlRequest>(JsonOptions);
         if (dto is null || string.IsNullOrWhiteSpace(dto.Url))
-            return Error(ErrorCodes.MalformedRequest, "Missing 'url'.");
+            return Error(requestId, ErrorCodes.MalformedRequest, "Missing 'url'.");
 
         var decision = await _bridge.EvaluateUrlAsync(dto.Url, dto.Browser, ct).ConfigureAwait(false);
         if (decision is null)
-            return Error(ErrorCodes.ServiceUnreachable, _bridge.LastError ?? "Service did not respond.");
+            return Error(requestId, ErrorCodes.ServiceUnreachable, _bridge.LastError ?? "Service did not respond.");
 
         return new CheckUrlResponse
         {
+            RequestId = requestId,
             Url = dto.Url,
             Blocked = decision.Blocked,
             Reason = decision.Reason,
@@ -76,13 +82,14 @@ public sealed class ExtensionMessageDispatcher
         };
     }
 
-    private async Task<object> HandleStatusAsync(CancellationToken ct)
+    private async Task<object> HandleStatusAsync(string? requestId, CancellationToken ct)
     {
         var status = await _bridge.GetStatusAsync(ct).ConfigureAwait(false);
         if (status is null)
         {
             return new StatusResponse
             {
+                RequestId = requestId,
                 Connected = false,
                 Reason = _bridge.LastError ?? "Service unreachable.",
                 ActiveSessionCount = 0,
@@ -91,6 +98,7 @@ public sealed class ExtensionMessageDispatcher
         }
         return new StatusResponse
         {
+            RequestId = requestId,
             Connected = true,
             ServiceVersion = status.ServiceVersion,
             ActiveSessionCount = status.ActiveSessionCount,
@@ -99,11 +107,12 @@ public sealed class ExtensionMessageDispatcher
         };
     }
 
-    private async Task<object> HandleActiveSessionsAsync(CancellationToken ct)
+    private async Task<object> HandleActiveSessionsAsync(string? requestId, CancellationToken ct)
     {
         var sessions = await _bridge.GetActiveSessionsAsync(ct).ConfigureAwait(false);
         return new ActiveSessionsResponse
         {
+            RequestId = requestId,
             Sessions = sessions.Select(s => new SessionPreview
             {
                 Id = s.SessionId,
@@ -116,11 +125,11 @@ public sealed class ExtensionMessageDispatcher
         };
     }
 
-    private async Task<object> HandleHeartbeatAsync(JsonElement root, CancellationToken ct)
+    private async Task<object> HandleHeartbeatAsync(JsonElement root, string? requestId, CancellationToken ct)
     {
         var dto = root.ReadAs<HeartbeatRequest>(JsonOptions);
         if (dto is null || string.IsNullOrWhiteSpace(dto.Browser) || string.IsNullOrWhiteSpace(dto.ExtensionId))
-            return Error(ErrorCodes.MalformedRequest, "Missing browser/extensionId.");
+            return Error(requestId, ErrorCodes.MalformedRequest, "Missing browser/extensionId.");
 
         var recorded = await _bridge.SendHeartbeatAsync(new ExtensionHeartbeatRequest
         {
@@ -130,11 +139,11 @@ public sealed class ExtensionMessageDispatcher
         }, ct).ConfigureAwait(false);
 
         if (!recorded)
-            return Error(ErrorCodes.ServiceUnreachable, _bridge.LastError ?? "Heartbeat not recorded.");
+            return Error(requestId, ErrorCodes.ServiceUnreachable, _bridge.LastError ?? "Heartbeat not recorded.");
 
-        return new HeartbeatAck { Recorded = true };
+        return new HeartbeatAck { RequestId = requestId, Recorded = true };
     }
 
-    private static ErrorResponse Error(string code, string message) =>
-        new() { ErrorCode = code, ErrorMessage = message };
+    private static ErrorResponse Error(string? requestId, string code, string message) =>
+        new() { RequestId = requestId, ErrorCode = code, ErrorMessage = message };
 }

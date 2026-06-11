@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="StopMe.App.Pages.PlannerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:StopMe.App.Core.ViewModels"
+    Background="{ThemeResource StopMeBackgroundBrush}">
+
+    <ScrollViewer Padding="{StaticResource StopMePagePadding}">
+        <StackPanel Spacing="20" MaxWidth="980" HorizontalAlignment="Stretch">
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="PLANNER" Style="{StaticResource StopMeSectionHeader}" />
+                <TextBlock Text="Create a focus session" Style="{StaticResource StopMeDisplay}" />
+                <TextBlock Style="{StaticResource StopMeBody}"
+                           Text="Pick the blocklists, duration and lock policy, then start the session or schedule it for later." />
+            </StackPanel>
+
+            <Border Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                    Style="{StaticResource StopMeCard}"
+                    Background="{ThemeResource StopMeDestructiveBrush}">
+                <TextBlock Style="{StaticResource StopMeBody}"
+                           Foreground="{ThemeResource StopMeDestructiveForegroundBrush}"
+                           Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+            </Border>
+
+            <Border Visibility="{x:Bind ViewModel.LastCreatedSummary, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
+                    Style="{StaticResource StopMeCard}"
+                    Background="{ThemeResource StopMeMutedBrush}">
+                <TextBlock Style="{StaticResource StopMeBody}"
+                           Text="{x:Bind ViewModel.LastCreatedSummary, Mode=OneWay}" />
+            </Border>
+
+            <!-- Form -->
+            <Border Style="{StaticResource StopMeCard}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="SESSION" Style="{StaticResource StopMeSectionHeader}" />
+
+                    <TextBlock Text="Name" Style="{StaticResource StopMeBody}" />
+                    <TextBox Style="{StaticResource StopMeTextBoxOutline}"
+                             Text="{x:Bind ViewModel.SessionName, Mode=TwoWay}" />
+
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Duration (min)" Style="{StaticResource StopMeBody}" />
+                            <ComboBox MinWidth="120"
+                                      ItemsSource="{x:Bind ViewModel.AvailableDurations}"
+                                      SelectedItem="{x:Bind ViewModel.DurationMinutes, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Mode" Style="{StaticResource StopMeBody}" />
+                            <ComboBox MinWidth="120"
+                                      ItemsSource="{x:Bind ViewModel.AvailableModeList}"
+                                      SelectedItem="{x:Bind ViewModel.SelectedMode, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Lock policy" Style="{StaticResource StopMeBody}" />
+                            <ComboBox MinWidth="160"
+                                      ItemsSource="{x:Bind ViewModel.AvailableLockPolicyList}"
+                                      SelectedItem="{x:Bind ViewModel.SelectedLockPolicy, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Spacing="4"
+                                Visibility="{x:Bind ViewModel.ShowsRequiredTextField, Mode=OneWay}">
+                        <TextBlock Text="Phrase to type to stop the session" Style="{StaticResource StopMeBody}" />
+                        <TextBox Style="{StaticResource StopMeTextBoxOutline}"
+                                 Text="{x:Bind ViewModel.RequiredText, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="4"
+                                Visibility="{x:Bind ViewModel.ShowsPasswordField, Mode=OneWay}">
+                        <TextBlock Text="Password (PBKDF2-SHA512 hashed locally)" Style="{StaticResource StopMeBody}" />
+                        <PasswordBox x:Name="PasswordField"
+                                     PasswordChanged="OnPasswordChanged" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Schedule -->
+            <Border Style="{StaticResource StopMeCard}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="SCHEDULE" Style="{StaticResource StopMeSectionHeader}" />
+                    <ToggleSwitch Header="Start at a specific date/time (otherwise start now)"
+                                  IsOn="{x:Bind ViewModel.UseScheduledStart, Mode=TwoWay}" />
+                    <Grid ColumnSpacing="10"
+                          Visibility="{x:Bind ViewModel.UseScheduledStart, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <CalendarDatePicker Grid.Column="0"
+                                            Date="{x:Bind ViewModel.ScheduledStartDate, Mode=TwoWay}"
+                                            PlaceholderText="Start date"
+                                            MinWidth="200" />
+                        <TimePicker Grid.Column="1"
+                                    MinWidth="140"
+                                    MinuteIncrement="5"
+                                    SelectedTime="{x:Bind ViewModel.ScheduledStartTime, Mode=TwoWay}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Blocklist picker -->
+            <Border Style="{StaticResource StopMeCard}">
+                <StackPanel Spacing="10">
+                    <Grid>
+                        <TextBlock Text="BLOCKLISTS" Style="{StaticResource StopMeSectionHeader}" />
+                        <Button HorizontalAlignment="Right"
+                                Style="{StaticResource StopMeGhostButton}"
+                                Content="Refresh"
+                                Click="OnRefreshClick" />
+                    </Grid>
+                    <TextBlock Style="{StaticResource StopMeCaption}"
+                               Text="Pick one or more existing blocklists. Create a blocklist from the Blocklists page first if the list is empty." />
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Blocklists, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BlocklistChoice">
+                                <Grid Margin="0,4,0,0" Padding="10,6"
+                                      ColumnSpacing="10"
+                                      Background="{ThemeResource StopMeMutedBrush}"
+                                      CornerRadius="{StaticResource StopMeCornerRadius}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{x:Bind IsSelected, Mode=TwoWay}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource StopMeBody}"
+                                                   Text="{x:Bind Name}" />
+                                        <TextBlock Style="{StaticResource StopMeCaption}">
+                                            <Run Text="{x:Bind Mode}" />
+                                            <Run Text=" — " />
+                                            <Run Text="{x:Bind RuleCount}" />
+                                            <Run Text=" rule(s)" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Actions -->
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="1"
+                        Style="{StaticResource StopMeGhostButton}"
+                        Content="Create (don't start)"
+                        Click="OnCreateOnlyClick" />
+                <Button Grid.Column="2"
+                        Style="{StaticResource StopMePrimaryButton}"
+                        Content="Create + start"
+                        Click="OnCreateAndStartClick" />
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

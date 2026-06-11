@@ -19,6 +19,14 @@ public sealed class HostsFileInternetBlockingProvider : IInternetBlockingProvide
     private readonly ILogger<HostsFileInternetBlockingProvider> _logger;
     private HashSet<string> _lastApplied = new(StringComparer.OrdinalIgnoreCase);
 
+    // When the service runs without admin, every write fails with
+    // UnauthorizedAccessException. The provider used to retry each tick (2s)
+    // and HostsFile.cs logged LogError every time — a flood of identical
+    // errors. We flip this flag on the first denial, log a single warning,
+    // and treat the provider as a no-op until the process restarts. The
+    // browser extension still enforces blocks at the network layer.
+    private bool _writeDeniedOnce;
+
     public HostsFileInternetBlockingProvider(HostsFile hosts, ILogger<HostsFileInternetBlockingProvider> logger)
     {
         _hosts = hosts;
@@ -27,8 +35,6 @@ public sealed class HostsFileInternetBlockingProvider : IInternetBlockingProvide
 
     public string Capability => "HostsFile";
 
-    // IInternetBlockingProvider.ApplyAsync drives Active on/off, but the actual
-    // domain list comes from ApplyDomainsAsync (called by ServiceWorker each tick).
     public Task ApplyAsync(InternetBlockingState state, CancellationToken ct = default)
     {
         if (!state.Active)
@@ -40,11 +46,12 @@ public sealed class HostsFileInternetBlockingProvider : IInternetBlockingProvide
 
     public Task ApplyDomainsAsync(IReadOnlyCollection<string> domains, CancellationToken ct = default)
     {
+        if (_writeDeniedOnce) return Task.CompletedTask;
+
         var desired = new HashSet<string>(
             domains.Select(HostsFile.NormalizeDomain).Where(d => !string.IsNullOrEmpty(d)),
             StringComparer.OrdinalIgnoreCase);
 
-        // Cheap diff — skip the file IO + DNS flush if nothing changed.
         if (desired.SetEquals(_lastApplied))
             return Task.CompletedTask;
 
@@ -53,7 +60,16 @@ public sealed class HostsFileInternetBlockingProvider : IInternetBlockingProvide
             return DeactivateAsync(ct);
         }
 
-        var ok = _hosts.ApplyBlocklist(desired);
+        var (ok, denied) = _hosts.ApplyBlocklist(desired);
+        if (denied)
+        {
+            _writeDeniedOnce = true;
+            _logger.LogWarning(
+                "Hosts-file blocking is disabled: write to {Path} denied (admin required). " +
+                "Web blocking will rely on the browser extension only until the service is restarted with admin rights.",
+                HostsFile.FilePath);
+            return Task.CompletedTask;
+        }
         if (ok)
         {
             _hosts.FlushDns();
@@ -65,9 +81,16 @@ public sealed class HostsFileInternetBlockingProvider : IInternetBlockingProvide
 
     public Task DeactivateAsync(CancellationToken ct = default)
     {
+        if (_writeDeniedOnce) return Task.CompletedTask;
         if (_lastApplied.Count == 0 && !HostsFile.HasStopMeBlock())
             return Task.CompletedTask;
-        var ok = _hosts.Restore();
+        var (ok, denied) = _hosts.Restore();
+        if (denied)
+        {
+            _writeDeniedOnce = true;
+            _logger.LogWarning("Hosts-file restore denied (admin required). Leaving file untouched.");
+            return Task.CompletedTask;
+        }
         if (ok)
         {
             _hosts.FlushDns();

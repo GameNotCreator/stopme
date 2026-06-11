@@ -21,7 +21,8 @@ public partial class PlannerViewModel : ViewModelBase
     private readonly IServiceConnection _connection;
     private readonly TimeProvider _clock;
 
-    public PlannerViewModel(IServiceConnection connection, TimeProvider clock)
+    public PlannerViewModel(IServiceConnection connection, TimeProvider clock, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
         _clock = clock;
@@ -87,23 +88,26 @@ public partial class PlannerViewModel : ViewModelBase
         try
         {
             var list = await _connection.ListBlocklistsAsync(ct).ConfigureAwait(false);
-            var previouslyChecked = Blocklists.Where(b => b.IsSelected).Select(b => b.Id).ToHashSet();
-            Blocklists.Clear();
-            foreach (var b in list)
+            await RunOnUiAsync(() =>
             {
-                Blocklists.Add(new BlocklistChoice
+                var previouslyChecked = Blocklists.Where(b => b.IsSelected).Select(b => b.Id).ToHashSet();
+                Blocklists.Clear();
+                foreach (var b in list)
                 {
-                    Id = b.Id,
-                    Name = b.Name,
-                    Mode = b.Mode,
-                    RuleCount = b.Rules.Count,
-                    IsSelected = previouslyChecked.Contains(b.Id),
-                });
-            }
+                    Blocklists.Add(new BlocklistChoice
+                    {
+                        Id = b.Id,
+                        Name = b.Name,
+                        Mode = b.Mode,
+                        RuleCount = b.Rules.Count,
+                        IsSelected = previouslyChecked.Contains(b.Id),
+                    });
+                }
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -174,16 +178,19 @@ public partial class PlannerViewModel : ViewModelBase
                 return;
             }
 
-            LastCreatedSummary = resp.Started
-                ? $"Session '{SessionName.Trim()}' started — ends at {endUtc.ToLocalTime():yyyy-MM-dd HH:mm}."
-                : explicitlyScheduled
-                    ? $"Session '{SessionName.Trim()}' scheduled for {startUtc.ToLocalTime():yyyy-MM-dd HH:mm}."
-                    : (resp.Warning ?? "Session created.");
-            StatusMessage = LastCreatedSummary;
+            await RunOnUiAsync(() =>
+            {
+                LastCreatedSummary = resp.Started
+                    ? $"Session '{SessionName.Trim()}' started — ends at {endUtc.ToLocalTime():yyyy-MM-dd HH:mm}."
+                    : explicitlyScheduled
+                        ? $"Session '{SessionName.Trim()}' scheduled for {startUtc.ToLocalTime():yyyy-MM-dd HH:mm}."
+                        : (resp.Warning ?? "Session created.");
+                StatusMessage = LastCreatedSummary;
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 

@@ -114,6 +114,15 @@ public sealed class ServiceWorker : BackgroundService
             var engine = scope.ServiceProvider.GetRequiredService<ISessionEngine>();
             var compiler = scope.ServiceProvider.GetRequiredService<IRuleCompiler>();
 
+            // Take a pre-completion view of active sessions. Anti-bypass runs
+            // FIRST so a clock-jump that would expire a strict session in
+            // CompleteExpiredSessionsAsync sets the drift flag in time for
+            // the engine to skip the strict completion below. A previous
+            // version ran anti-bypass at the END of the tick, by which point
+            // the strict session was already silently completed.
+            var preCompletionActive = await engine.GetActiveSessionsAsync(nowUtc, ct).ConfigureAwait(false);
+            await _antiBypass.RunAsync(nowUtc, preCompletionActive, ct).ConfigureAwait(false);
+
             await engine.CompleteExpiredSessionsAsync(nowUtc, ct).ConfigureAwait(false);
             active = await engine.GetActiveSessionsAsync(nowUtc, ct).ConfigureAwait(false);
             rules = await compiler.CompileForSessionsAsync(active, ct).ConfigureAwait(false);
@@ -135,8 +144,6 @@ public sealed class ServiceWorker : BackgroundService
             var blockedDomains = ExtractDomains(rules);
             await _hostsBlocker.ApplyDomainsAsync(blockedDomains, ct).ConfigureAwait(false);
         }
-
-        await _antiBypass.RunAsync(nowUtc, active, ct).ConfigureAwait(false);
     }
 
     private static HashSet<string> ExtractDomains(IReadOnlyList<CompiledRule> rules)
@@ -151,16 +158,14 @@ public sealed class ServiceWorker : BackgroundService
                 case RuleType.Domain:
                     set.Add(r.Value);
                     break;
-                case RuleType.Url:
-                    // Pull the host out of a full URL rule.
-                    if (Uri.TryCreate(r.Value, UriKind.Absolute, out var uri))
-                        set.Add(uri.Host);
-                    break;
                 case RuleType.ExceptionDomain:
                     exceptions.Add(r.Value);
                     break;
-                // Wildcard / Url / category rules can't be expressed as hosts
-                // file entries — those still need the browser extension.
+                // Url / Wildcard / Category rules deliberately do NOT land in
+                // the hosts file. The previous Url handler pulled out the host
+                // and added it, which silently blocked the entire domain when
+                // the user only meant to block a specific path. Path- and
+                // pattern-scoped rules are enforced by the browser extension.
             }
         }
         foreach (var e in exceptions) set.Remove(e);

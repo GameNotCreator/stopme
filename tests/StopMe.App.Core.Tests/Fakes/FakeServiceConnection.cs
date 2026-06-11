@@ -39,6 +39,15 @@ internal sealed class FakeServiceConnection : IServiceConnection
     public Task<IReadOnlyList<ActiveSessionDto>> GetActiveSessionsAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<ActiveSessionDto>>(ActiveSessionsToReturn.ToArray());
 
+    public List<SessionListItemDto> SessionListToReturn { get; } = new();
+    public List<string?> SessionListStatusFilters { get; } = new();
+
+    public Task<IReadOnlyList<SessionListItemDto>> GetSessionListAsync(string? statusFilter = null, CancellationToken ct = default)
+    {
+        SessionListStatusFilters.Add(statusFilter);
+        return Task.FromResult<IReadOnlyList<SessionListItemDto>>(SessionListToReturn.ToArray());
+    }
+
     public Task<IReadOnlyList<BlocklistDto>> ListBlocklistsAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<BlocklistDto>>(BlocklistsToReturn.ToArray());
 

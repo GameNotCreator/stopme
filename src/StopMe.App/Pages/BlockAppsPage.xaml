@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="StopMe.App.Pages.BlockAppsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="using:StopMe.App.Controls"
+    xmlns:vm="using:StopMe.App.Core.ViewModels"
+    Background="Transparent">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" Padding="40,36,40,16" HorizontalScrollMode="Disabled">
+            <Grid MaxWidth="1060" HorizontalAlignment="Stretch">
+
+                <StackPanel Spacing="28">
+
+                    <!-- Page header -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="6">
+                            <TextBlock Text="Block Apps" Style="{StaticResource StopMePageTitle}" />
+                            <TextBlock Text="Choose the applications StopMe should close and prevent from reopening."
+                                       Style="{StaticResource StopMeBodySecondary}"
+                                       FontSize="14.5"
+                                       MaxWidth="520"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Style="{StaticResource StopMeSecondaryButton}"
+                                Click="OnRefreshClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <c:IconGlyph IconName="refresh" Size="17" ForegroundBrush="{ThemeResource StopMeTextSecondaryBrush}" />
+                                <TextBlock x:Name="RefreshLabel" Text="Refresh apps" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Two-column grid: 1.6fr running apps / 1fr selected + manual -->
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.6*" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- ===== Running / Installed apps card ===== -->
+                        <Border Grid.Column="0"
+                                Background="{ThemeResource StopMeBgPrimaryBrush}"
+                                BorderBrush="{ThemeResource StopMeBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="20">
+                            <StackPanel>
+                                <!-- Tab header + search -->
+                                <Grid Padding="20,18,20,14" BorderBrush="{ThemeResource StopMeBorderBrush}" BorderThickness="0,0,0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,12,0">
+                                        <Button x:Name="RunningTabBtn"
+                                                Click="OnRunningTabClick"
+                                                Style="{StaticResource StopMeSecondaryButtonSmall}">
+                                            <TextBlock x:Name="RunningTabLabel" Text="Running" />
+                                        </Button>
+                                        <Button x:Name="InstalledTabBtn"
+                                                Click="OnInstalledTabClick"
+                                                Style="{StaticResource StopMeGhostButtonSmall}">
+                                            <TextBlock x:Name="InstalledTabLabel" Text="Installed" />
+                                        </Button>
+                                    </StackPanel>
+                                    <TextBox Grid.Column="1"
+                                             x:Name="SearchBox"
+                                             Style="{StaticResource StopMeTextBox}"
+                                             PlaceholderText="Search apps"
+                                             MinHeight="38"
+                                             TextChanged="OnSearchTextChanged" />
+                                </Grid>
+
+                                <!-- Spinner during refresh -->
+                                <StackPanel x:Name="RefreshingPanel"
+                                            Visibility="Collapsed"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Spacing="10"
+                                            Padding="0,60">
+                                    <ProgressRing IsActive="True" Width="18" Height="18" />
+                                    <TextBlock Text="Scanning running apps…"
+                                               Style="{StaticResource StopMeBodySecondary}"
+                                               FontSize="13.5"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <!-- Empty state -->
+                                <c:EmptyState x:Name="RunningEmpty"
+                                              IconName="apps"
+                                              Title="No running apps detected."
+                                              Body="Open the app you want to block, then click Refresh."
+                                              Visibility="Collapsed" />
+
+                                <!-- App rows -->
+                                <ItemsControl x:Name="RunningAppsList" />
+
+                                <!-- Footer strip -->
+                                <Grid Padding="20,10" BorderBrush="{ThemeResource StopMeBorderBrush}" BorderThickness="0,1,0,0">
+                                    <TextBlock x:Name="RunningAppsCount"
+                                               HorizontalAlignment="Right"
+                                               Text="0 apps detected"
+                                               Style="{StaticResource StopMeSmallTertiary}"
+                                               FontSize="12" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ===== Right column: Selected + Manual ===== -->
+                        <StackPanel Grid.Column="1" Spacing="16">
+
+                            <Border Style="{StaticResource StopMeCard}" Padding="20">
+                                <StackPanel Spacing="12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Selected apps"
+                                                   Style="{StaticResource StopMeCardTitle}" />
+                                        <Border x:Name="SelectedBadge"
+                                                Grid.Column="1"
+                                                Style="{StaticResource StopMeBadge}">
+                                            <TextBlock x:Name="SelectedBadgeText"
+                                                       Text="0"
+                                                       Style="{StaticResource StopMeBadgeText}"
+                                                       Foreground="{ThemeResource StopMeTextSecondaryBrush}" />
+                                        </Border>
+                                    </Grid>
+
+                                    <TextBlock x:Name="SelectedEmpty"
+                                               Text="No apps selected yet. Toggle apps in the list to add them."
+                                               Style="{StaticResource StopMeBodySecondary}"
+                                               FontSize="13" />
+
+                                    <ItemsControl x:Name="SelectedList" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource StopMeCard}" Padding="20">
+                                <StackPanel Spacing="10">
+                                    <Button x:Name="ManualToggleBtn"
+                                            Background="Transparent"
+                                            BorderBrush="Transparent"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="0"
+                                            Click="OnToggleManualClick">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="Add manually"
+                                                       Style="{StaticResource StopMeCardTitle}" />
+                                            <c:IconGlyph x:Name="ManualToggleIcon"
+                                                         Grid.Column="1"
+                                                         IconName="chevronRight"
+                                                         Size="16"
+                                                         ForegroundBrush="{ThemeResource StopMeTextTertiaryBrush}" />
+                                        </Grid>
+                                    </Button>
+
+                                    <TextBlock x:Name="ManualHint"
+                                               Text="Block by process, path, folder or window title."
+                                               Style="{StaticResource StopMeSmallTertiary}"
+                                               FontSize="12.5"
+                                               Margin="0,4,0,0" />
+
+                                    <StackPanel x:Name="ManualPanel" Visibility="Collapsed" Spacing="10">
+                                        <TextBlock Text="For apps that aren't running right now. Fill in any one field."
+                                                   Style="{StaticResource StopMeSmall}"
+                                                   FontSize="12.5" />
+                                        <TextBox x:Name="ManualProcessBox"
+                                                 Style="{StaticResource StopMeMonoTextBox}"
+                                                 PlaceholderText="Process name — e.g. discord.exe" />
+                                        <TextBox x:Name="ManualPathBox"
+                                                 Style="{StaticResource StopMeMonoTextBox}"
+                                                 PlaceholderText="Executable path" />
+                                        <TextBox x:Name="ManualFolderBox"
+                                                 Style="{StaticResource StopMeMonoTextBox}"
+                                                 PlaceholderText="Folder path" />
+                                        <TextBox x:Name="ManualTitleBox"
+                                                 Style="{StaticResource StopMeTextBox}"
+                                                 PlaceholderText="Window title contains…" />
+                                        <Button x:Name="AddManualBtn"
+                                                Style="{StaticResource StopMeSoftButton}"
+                                                Click="OnAddManualClick"
+                                                HorizontalAlignment="Stretch">
+                                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                                <c:IconGlyph IconName="plus" Size="15" ForegroundBrush="{ThemeResource StopMeAccentTextBrush}" />
+                                                <TextBlock Text="Add app rule" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Status banner / last start summary -->
+                    <Border x:Name="StatusBanner"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource StopMeAccentSoftBrush}"
+                            CornerRadius="14"
+                            Padding="16,12">
+                        <TextBlock x:Name="StatusBannerText"
+                                   Style="{StaticResource StopMeBody}"
+                                   FontSize="13.5"
+                                   Foreground="{ThemeResource StopMeAccentTextBrush}" />
+                    </Border>
+
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ===== Sticky action bar ===== -->
+        <Border Grid.Row="1"
+                Style="{StaticResource StopMeStickyBar}"
+                Margin="40,16,40,28">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="DURATION"
+                               Style="{StaticResource StopMeEyebrow}"
+                               VerticalAlignment="Center" />
+                    <c:DurationSelector x:Name="StickyDuration" Compact="True" Minutes="30" />
+                </StackPanel>
+                <c:StrictToggle Grid.Column="1" x:Name="StickyStrict" />
+                <Button Grid.Column="2"
+                        x:Name="StartBlockingBtn"
+                        Style="{StaticResource StopMePrimaryButton}"
+                        IsEnabled="False"
+                        Click="OnStartClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <c:IconGlyph IconName="play" Size="16" ForegroundBrush="White" />
+                        <TextBlock x:Name="StartBlockingText" Text="Select apps to block" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

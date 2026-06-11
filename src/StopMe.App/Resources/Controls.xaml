@@ -1,0 +1,525 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        StopMe — reusable WinUI styles + control templates that mirror the prototype
+        components in design_handoff_stopme/prototype/js/stopme-ui.jsx.
+
+        Button variants: Primary / Secondary / Ghost / Soft / Dark / Danger
+        Card, Pill toggle button, Badge (5 tones + strict), Status dot, Inputs,
+        Toggle (ToggleSwitch styled), Setting row.
+
+        Per WinUI 3 quirks captured in build_conventions: TextBlock has no
+        LetterSpacing / TextTransform — we use CharacterSpacing + uppercased
+        strings in C# / XAML.
+    -->
+
+    <!-- ===================== Card ===================== -->
+
+    <Style x:Key="StopMeCard" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource StopMeBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusCard}" />
+        <Setter Property="Padding" Value="24" />
+    </Style>
+
+    <Style x:Key="StopMeCardLg" TargetType="Border" BasedOn="{StaticResource StopMeCard}">
+        <Setter Property="Padding" Value="28" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusCardLg}" />
+    </Style>
+
+    <!-- Dashed muted card — used for "No active blocking session" -->
+    <Style x:Key="StopMeMutedCard" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource StopMeBorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusCard}" />
+        <Setter Property="Padding" Value="24" />
+    </Style>
+
+    <!-- ===================== Button variants ===================== -->
+
+    <!-- Primary — violet bg, white text -->
+    <Style x:Key="StopMePrimaryButton" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource StopMeAccentBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeBgPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusButton}" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Padding="{TemplateBinding Padding}"
+                                          ContentTransitions="{TemplateBinding ContentTransitions}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeAccentHoverBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeAccentActiveBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StopMePrimaryButtonLarge" TargetType="Button" BasedOn="{StaticResource StopMePrimaryButton}">
+        <Setter Property="Padding" Value="24,13" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="MinHeight" Value="46" />
+    </Style>
+
+    <Style x:Key="StopMePrimaryButtonSmall" TargetType="Button" BasedOn="{StaticResource StopMePrimaryButton}">
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+
+    <!-- Secondary — white bg, dark text, strong border. Default. -->
+    <Style x:Key="StopMeSecondaryButton" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource StopMeBorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusButton}" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Padding="{TemplateBinding Padding}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgTertiaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StopMeSecondaryButtonLarge" TargetType="Button" BasedOn="{StaticResource StopMeSecondaryButton}">
+        <Setter Property="Padding" Value="24,13" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="MinHeight" Value="46" />
+    </Style>
+
+    <Style x:Key="StopMeSecondaryButtonSmall" TargetType="Button" BasedOn="{StaticResource StopMeSecondaryButton}">
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+
+    <!-- Ghost — transparent, hover -> bg-secondary -->
+    <Style x:Key="StopMeGhostButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeTextSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusButton}" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Padding="{TemplateBinding Padding}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgTertiaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StopMeGhostButtonSmall" TargetType="Button" BasedOn="{StaticResource StopMeGhostButton}">
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+
+    <!-- Ghost danger — red text on hover, no border -->
+    <Style x:Key="StopMeGhostDangerButton" TargetType="Button" BasedOn="{StaticResource StopMeGhostButton}">
+        <Setter Property="Foreground" Value="{ThemeResource StopMeErrorBrush}" />
+    </Style>
+
+    <!-- Soft — accent-soft bg, violet text -->
+    <Style x:Key="StopMeSoftButton" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource StopMeAccentSoftBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeAccentTextBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusButton}" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Padding="{TemplateBinding Padding}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeAccentSoft2Brush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Dark — near-black bg, white text (used for "I'm sure — lock me in") -->
+    <Style x:Key="StopMeDarkButton" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource StopMeTextPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeBgPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusButton}" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Padding="{TemplateBinding Padding}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background">
+                                            <Setter.Value>
+                                                <SolidColorBrush Color="#FF2A2735" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Danger — red bg, white text (StopMe destructive — rarely used) -->
+    <Style x:Key="StopMeDangerButton" TargetType="Button" BasedOn="{StaticResource StopMePrimaryButton}">
+        <Setter Property="Background" Value="{ThemeResource StopMeErrorBrush}" />
+    </Style>
+
+    <!-- Locked — strict session stop button (not actionable, shake on click handled in code) -->
+    <Style x:Key="StopMeLockedButton" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgTertiaryBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeTextTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusButton}" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="38" />
+    </Style>
+
+    <!-- Caption-button (for the custom titlebar minimize/maximize/close) -->
+    <Style x:Key="StopMeCaptionButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeTextSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="46" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid"
+                          Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgTertiaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StopMeCloseCaptionButton" TargetType="Button" BasedOn="{StaticResource StopMeCaptionButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeErrorBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeErrorSoftBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Sidebar nav button — drives layout: active = white bg with shadow + icon in accent -->
+    <Style x:Key="StopMeNavItemButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeTextSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="13,10" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid"
+                          Background="{TemplateBinding Background}"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Center"
+                                          Padding="{TemplateBinding Padding}"
+                                          HorizontalContentAlignment="Stretch" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgSecondaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource StopMeBgTertiaryBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===================== Toggle (ToggleSwitch styled) ===================== -->
+    <Style x:Key="StopMeToggle" TargetType="ToggleSwitch">
+        <Setter Property="OnContent" Value="" />
+        <Setter Property="OffContent" Value="" />
+        <Setter Property="MinWidth" Value="42" />
+    </Style>
+
+    <!-- ===================== Badges ===================== -->
+
+    <Style x:Key="StopMeBadge" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgTertiaryBrush}" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="9,3,9,3" />
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="StopMeBadgeAccent" TargetType="Border" BasedOn="{StaticResource StopMeBadge}">
+        <Setter Property="Background" Value="{ThemeResource StopMeAccentSoftBrush}" />
+    </Style>
+
+    <Style x:Key="StopMeBadgeSuccess" TargetType="Border" BasedOn="{StaticResource StopMeBadge}">
+        <Setter Property="Background" Value="{ThemeResource StopMeSuccessSoftBrush}" />
+    </Style>
+
+    <Style x:Key="StopMeBadgeWarning" TargetType="Border" BasedOn="{StaticResource StopMeBadge}">
+        <Setter Property="Background" Value="{ThemeResource StopMeWarningSoftBrush}" />
+    </Style>
+
+    <Style x:Key="StopMeBadgeError" TargetType="Border" BasedOn="{StaticResource StopMeBadge}">
+        <Setter Property="Background" Value="{ThemeResource StopMeErrorSoftBrush}" />
+    </Style>
+
+    <Style x:Key="StopMeBadgeStrict" TargetType="Border" BasedOn="{StaticResource StopMeBadge}">
+        <Setter Property="Background" Value="{ThemeResource StopMeTextPrimaryBrush}" />
+    </Style>
+
+    <!-- ===================== Inputs ===================== -->
+
+    <Style x:Key="StopMeTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource StopMeBorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusInput}" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="StopMeMonoTextBox" TargetType="TextBox" BasedOn="{StaticResource StopMeTextBox}">
+        <Setter Property="FontFamily" Value="{StaticResource StopMeMonoFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="StopMePasswordBox" TargetType="PasswordBox">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource StopMeTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource StopMeBorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource StopMeRadiusInput}" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="FontFamily" Value="{StaticResource StopMeSansFontFamily}" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <!-- Sticky action bar — bottom of Block Apps / Websites pages -->
+    <Style x:Key="StopMeStickyBar" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource StopMeBgPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource StopMeBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="18" />
+        <Setter Property="Padding" Value="20,14" />
+    </Style>
+
+    <!-- Legacy aliases (kept for older XAML) -->
+    <Style x:Key="StopMeDestructiveButton" TargetType="Button" BasedOn="{StaticResource StopMeDangerButton}" />
+    <Style x:Key="StopMeTextBoxOutline" TargetType="TextBox" BasedOn="{StaticResource StopMeTextBox}" />
+
+</ResourceDictionary>

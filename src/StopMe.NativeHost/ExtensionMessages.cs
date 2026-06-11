@@ -36,6 +36,11 @@ public sealed class CheckUrlResponse
     [JsonPropertyName("type")]
     public string Type => MessageTypes.CheckUrlResult;
 
+    // Mirrored from the incoming request so the extension can correlate a
+    // response to the right pending promise. Without it, a timed-out request
+    // would shift the FIFO queue and the next response would resolve the
+    // wrong tab's promise.
+    public string? RequestId { get; init; }
     public required string Url { get; init; }
     public required bool Blocked { get; init; }
     public string? Reason { get; init; }
@@ -50,6 +55,7 @@ public sealed class StatusResponse
     [JsonPropertyName("type")]
     public string Type => MessageTypes.Status;
 
+    public string? RequestId { get; init; }
     public required bool Connected { get; init; }
     public string? ServiceVersion { get; init; }
     public int ActiveSessionCount { get; init; }
@@ -63,6 +69,7 @@ public sealed class ActiveSessionsResponse
     [JsonPropertyName("type")]
     public string Type => MessageTypes.ActiveSessions;
 
+    public string? RequestId { get; init; }
     public required IReadOnlyList<SessionPreview> Sessions { get; init; }
 }
 
@@ -88,6 +95,7 @@ public sealed class HeartbeatAck
     [JsonPropertyName("type")]
     public string Type => MessageTypes.HeartbeatAck;
 
+    public string? RequestId { get; init; }
     public required bool Recorded { get; init; }
 }
 
@@ -96,6 +104,7 @@ public sealed class ErrorResponse
     [JsonPropertyName("type")]
     public string Type => MessageTypes.Error;
 
+    public string? RequestId { get; init; }
     public required string ErrorCode { get; init; }
     public required string ErrorMessage { get; init; }
     public string? Echo { get; init; }

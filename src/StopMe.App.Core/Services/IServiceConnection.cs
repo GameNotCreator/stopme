@@ -16,6 +16,8 @@ public interface IServiceConnection
 
     Task<IReadOnlyList<ActiveSessionDto>> GetActiveSessionsAsync(CancellationToken ct = default);
 
+    Task<IReadOnlyList<SessionListItemDto>> GetSessionListAsync(string? statusFilter = null, CancellationToken ct = default);
+
     Task<IReadOnlyList<BlocklistDto>> ListBlocklistsAsync(CancellationToken ct = default);
 
     Task<BlocklistDto?> CreateBlocklistAsync(CreateBlocklistRequest request, CancellationToken ct = default);

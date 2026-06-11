@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="StopMe.App.Controls.StopMeProgressRing"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid x:Name="Root">
+        <!-- Track + progress arc are drawn in code-behind onto these shapes,
+             centered inside Root. The center content (countdown) is layered on top. -->
+        <Canvas x:Name="Canvas" />
+        <ContentPresenter x:Name="CenterContent"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Content="{x:Bind CenterContentValue, Mode=OneWay}" />
+    </Grid>
+</UserControl>

@@ -41,6 +41,14 @@ public sealed class TemplateService : ITemplateService
         var nowUtc = _clock.GetUtcNow().UtcDateTime;
         var blocklistIds = new List<Guid>();
 
+        // The (UserProfileId, Name) uniqueness on the Blocklist table means a
+        // template applied a second time would fail the AddAsync with a
+        // UNIQUE constraint violation. Build a set of taken names once and
+        // generate suffixed variants for collisions instead of failing.
+        var existingNames = (await _blocklists.GetAllAsync(userProfileId, ct).ConfigureAwait(false))
+            .Select(b => b.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         foreach (var spec in template.Blocklists)
         {
             var rules = new List<BlockRule>();
@@ -86,11 +94,14 @@ public sealed class TemplateService : ITemplateService
                 });
             }
 
+            var uniqueName = DeriveUniqueName(spec.Name, existingNames, nowUtc);
+            existingNames.Add(uniqueName);
+
             var blocklist = new Blocklist
             {
                 Id = Guid.NewGuid(),
                 UserProfileId = userProfileId,
-                Name = spec.Name,
+                Name = uniqueName,
                 Description = $"Generated from template '{template.Key}'",
                 Mode = spec.Mode,
                 IsEnabled = true,
@@ -131,5 +142,21 @@ public sealed class TemplateService : ITemplateService
             SessionId = session.Id,
             BlocklistIds = blocklistIds,
         };
+    }
+
+    private static string DeriveUniqueName(string baseName, HashSet<string> taken, DateTime nowUtc)
+    {
+        if (!taken.Contains(baseName)) return baseName;
+        // First collision → append a UTC timestamp so the user can still
+        // spot which run produced the blocklist. Subsequent collisions on
+        // the same minute (rare) get a numeric suffix on top.
+        var candidate = $"{baseName} ({nowUtc:yyyy-MM-dd HH:mm})";
+        if (!taken.Contains(candidate)) return candidate;
+        for (var i = 2; i < int.MaxValue; i++)
+        {
+            var withCount = $"{candidate} #{i}";
+            if (!taken.Contains(withCount)) return withCount;
+        }
+        return $"{baseName}-{Guid.NewGuid():N}";
     }
 }

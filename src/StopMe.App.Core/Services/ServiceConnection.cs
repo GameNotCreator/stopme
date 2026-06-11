@@ -106,6 +106,12 @@ public sealed class ServiceConnection : IServiceConnection, IAsyncDisposable
     public async Task<IReadOnlyList<ActiveSessionDto>> GetActiveSessionsAsync(CancellationToken ct = default) =>
         await SendAsync<ActiveSessionDto[]>(c => c.ActiveSessionsAsync(ct), ct).ConfigureAwait(false) ?? Array.Empty<ActiveSessionDto>();
 
+    public async Task<IReadOnlyList<SessionListItemDto>> GetSessionListAsync(string? statusFilter = null, CancellationToken ct = default) =>
+        await SendAsync<SessionListItemDto[]>(c => c.SessionListAsync(new SessionListRequest
+        {
+            StatusFilter = statusFilter,
+        }, ct), ct).ConfigureAwait(false) ?? Array.Empty<SessionListItemDto>();
+
     public async Task<IReadOnlyList<BlocklistDto>> ListBlocklistsAsync(CancellationToken ct = default) =>
         await SendAsync<BlocklistDto[]>(c => c.ListBlocklistsAsync(ct), ct).ConfigureAwait(false) ?? Array.Empty<BlocklistDto>();
 

@@ -10,7 +10,8 @@ public partial class ActiveSessionViewModel : ViewModelBase
 {
     private readonly IServiceConnection _connection;
 
-    public ActiveSessionViewModel(IServiceConnection connection)
+    public ActiveSessionViewModel(IServiceConnection connection, IDispatcher? dispatcher = null)
+        : base(dispatcher)
     {
         _connection = connection;
     }
@@ -37,13 +38,16 @@ public partial class ActiveSessionViewModel : ViewModelBase
         try
         {
             var sessions = await _connection.GetActiveSessionsAsync(ct).ConfigureAwait(false);
-            Sessions.Clear();
-            foreach (var s in sessions) Sessions.Add(s);
-            Focused = Sessions.FirstOrDefault();
+            await RunOnUiAsync(() =>
+            {
+                Sessions.Clear();
+                foreach (var s in sessions) Sessions.Add(s);
+                Focused = Sessions.FirstOrDefault();
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 
@@ -66,25 +70,32 @@ public partial class ActiveSessionViewModel : ViewModelBase
 
             if (resp is null)
             {
-                SetError(_connection.LastError ?? "Service did not respond.");
+                await RunOnUiAsync(() =>
+                    SetError(_connection.LastError ?? "Service did not respond.")
+                ).ConfigureAwait(false);
                 return;
             }
 
             if (!resp.Stopped)
             {
-                SetError(resp.DenialReason ?? "Session refused to stop.");
+                await RunOnUiAsync(() =>
+                    SetError(resp.DenialReason ?? "Session refused to stop.")
+                ).ConfigureAwait(false);
                 return;
             }
 
-            Sessions.Remove(Focused);
-            Focused = Sessions.FirstOrDefault();
-            UserConfirmed = false;
-            Password = string.Empty;
-            TypedPhrase = string.Empty;
+            await RunOnUiAsync(() =>
+            {
+                Sessions.Remove(Focused);
+                Focused = Sessions.FirstOrDefault();
+                UserConfirmed = false;
+                Password = string.Empty;
+                TypedPhrase = string.Empty;
+            }).ConfigureAwait(false);
         }
         finally
         {
-            IsBusy = false;
+            await RunOnUiAsync(() => IsBusy = false).ConfigureAwait(false);
         }
     }
 }
