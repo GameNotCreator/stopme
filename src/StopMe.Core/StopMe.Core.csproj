@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>StopMe.Core</RootNamespace>
+    <AssemblyName>StopMe.Core</AssemblyName>
+    <PackageId>StopMe.Core</PackageId>
+    <Description>StopMe domain logic: entities, rule engines, session engine. No infrastructure dependencies.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="StopMe.Core.Tests" />
+    <InternalsVisibleTo Include="StopMe.Infrastructure" />
+  </ItemGroup>
+
+</Project>

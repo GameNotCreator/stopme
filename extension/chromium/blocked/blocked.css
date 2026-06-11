@@ -1,0 +1,82 @@
+/* Browser blocked page — body-only (extension does not control browser chrome).
+   Matches the 2026-06 design handoff: violet shield tile, serif headline,
+   accent-pill countdown, italic serif quote. Soft gradient background. */
+
+html, body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: linear-gradient(170deg, #FBFAFE 0%, var(--accent-soft) 100%);
+}
+
+.page {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 80px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.shield {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(140deg, var(--accent), var(--accent-active));
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(109, 90, 230, 0.35);
+  margin-bottom: 8px;
+}
+
+.page h1 {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.lead {
+  font-size: 15px;
+  max-width: 400px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.lead strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.back-pill {
+  margin-top: 14px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent-soft-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.quote {
+  margin-top: 22px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--text-tertiary);
+  max-width: 440px;
+}

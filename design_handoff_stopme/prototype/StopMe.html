@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StopMe — Desktop App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stopme.css">
+</head>
+<body>
+<!--
+  StopMe — Windows desktop productivity app (full redesign)
+
+  DESIGN REASONING
+  · Inspiration: Wispr Flow desktop (structure, whitespace, rounded cards, light sidebar) —
+    transposed, not copied. New brand: white-dominant, near-black text, sober violet #6D5AE6.
+  · Type: Schibsted Grotesk (UI) + Instrument Serif (hero moments, big countdowns).
+  · Core flow ≤ 20s: select apps/sites → duration → Start Blocking. The Dashboard summarizes
+    the current selection; Block Apps / Block Websites own the selection (per user choice).
+  · Strict mode has a visual signature: near-black instead of violet (card border, ring,
+    sidebar mini-card, STRICT badge with lock icon).
+  · Service connectivity is never silent: banner states (connecting → connecting-long →
+    actionable errors), status mini-card, sidebar status chip, diagnostics modal.
+  · Variations are exposed in the Tweaks panel: Dashboard layout (hero / split / calm),
+    session timer (ring / bar / dark), sidebar (tinted / white / rail), accent violet,
+    plus simulated service states and the two out-of-app screens
+    (Windows blocked-app toast, browser blocked page).
+-->
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="js/tweaks-panel.jsx"></script>
+<script type="text/babel" src="js/stopme-ui.jsx"></script>
+<script type="text/babel" src="js/stopme-data.jsx"></script>
+<script type="text/babel" src="js/page-dashboard.jsx"></script>
+<script type="text/babel" src="js/page-block.jsx"></script>
+<script type="text/babel" src="js/page-other.jsx"></script>
+<script type="text/babel" src="js/overlays.jsx"></script>
+<script type="text/babel" src="js/app.jsx"></script>
+</body>
+</html>

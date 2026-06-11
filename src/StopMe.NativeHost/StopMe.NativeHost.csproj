@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>StopMe.NativeHost</RootNamespace>
+    <AssemblyName>StopMe.NativeHost</AssemblyName>
+    <Description>StopMe Native Messaging Host: bridges Chromium browser extensions and the StopMe Windows Service over the local IPC pipe.</Description>
+    <IsPackable>false</IsPackable>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <NoWarn>$(NoWarn);CA1822;CA1024;CA1812;CA1062</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StopMe.LocalApi\StopMe.LocalApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="StopMe.NativeHost.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,140 @@
+/* ============================================================
+   StopMe — Design Tokens & Base Styles
+   Light theme only. White-dominant, sober violet accent.
+   ============================================================ */
+
+:root {
+  /* Color — backgrounds */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F6F5FA;
+  --bg-tertiary: #EFEDF6;
+  --bg-app: #F3F2F8;
+
+  /* Color — text */
+  --text-primary: #17151F;
+  --text-secondary: #6E6A7C;
+  --text-tertiary: #9B97AA;
+
+  /* Color — accent (sober violet) */
+  --accent: #7C5CFF;
+  --accent-hover: #6A4AF0;
+  --accent-active: #5C3CE0;
+  --accent-soft: #F1ECFF;
+  --accent-soft-2: #E4DCFF;
+  --accent-text: #6442E8;
+
+  /* Color — semantic */
+  --success: #1F8A5B;
+  --success-soft: #E5F4EC;
+  --warning: #B97B0A;
+  --warning-soft: #FBF2DF;
+  --error: #CC4256;
+  --error-soft: #FBEAED;
+
+  /* Borders */
+  --border: #E9E7F1;
+  --border-strong: #DBD8E8;
+
+  /* Radii */
+  --radius-card: 20px;
+  --radius-card-lg: 24px;
+  --radius-btn: 12px;
+  --radius-input: 12px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgba(23, 21, 31, 0.04), 0 4px 16px rgba(23, 21, 31, 0.04);
+  --shadow-raised: 0 2px 6px rgba(23, 21, 31, 0.06), 0 12px 32px rgba(23, 21, 31, 0.10);
+  --shadow-modal: 0 8px 24px rgba(23, 21, 31, 0.10), 0 24px 64px rgba(23, 21, 31, 0.18);
+
+  /* Type */
+  --font-sans: "Schibsted Grotesk", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
+
+  --fs-page-title: 26px;
+  --fs-section-title: 17px;
+  --fs-card-title: 15px;
+  --fs-body: 14px;
+  --fs-small: 12.5px;
+  --fs-badge: 11px;
+
+  /* Spacing (8px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 40px;
+  --sp-8: 56px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background: var(--bg-app);
+  font-size: var(--fs-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root { height: 100%; }
+
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #D7D4E2;
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: #BFBBD1; }
+
+/* ---------- keyframes ---------- */
+/* entrance from-states stay visible so frozen frames (hidden tabs,
+   reduced-motion, static captures) never hide content */
+@keyframes sm-fade-in {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+@keyframes sm-pop-in {
+  from { opacity: 0.5; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sm-slide-up {
+  from { opacity: 0.5; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sm-toast-in {
+  from { opacity: 0.5; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes sm-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes sm-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes sm-pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes sm-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.06); opacity: 0.9; }
+}
+
+.sm-shake { animation: sm-shake 0.45s ease; }
+
+/* selection */
+::selection { background: var(--accent-soft-2); }

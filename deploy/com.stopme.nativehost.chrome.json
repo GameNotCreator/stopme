@@ -1,0 +1,9 @@
+{
+  "name": "com.stopme.nativehost",
+  "description": "StopMe Native Messaging Host — bridges Chromium extensions to the local StopMe service.",
+  "path": "${EXE_PATH}",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://${CHROME_EXTENSION_ID}/"
+  ]
+}

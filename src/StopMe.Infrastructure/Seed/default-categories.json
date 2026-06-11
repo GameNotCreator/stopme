@@ -1,0 +1,177 @@
+{
+  "categories": [
+    {
+      "name": "Social Media",
+      "domains": [
+        "facebook.com",
+        "instagram.com",
+        "twitter.com",
+        "x.com",
+        "tiktok.com",
+        "snapchat.com",
+        "reddit.com",
+        "pinterest.com",
+        "linkedin.com",
+        "threads.net",
+        "bsky.app",
+        "mastodon.social",
+        "tumblr.com"
+      ]
+    },
+    {
+      "name": "Video Streaming",
+      "domains": [
+        "youtube.com",
+        "netflix.com",
+        "twitch.tv",
+        "hulu.com",
+        "disneyplus.com",
+        "primevideo.com",
+        "max.com",
+        "vimeo.com",
+        "dailymotion.com",
+        "kick.com"
+      ]
+    },
+    {
+      "name": "Gaming",
+      "domains": [
+        "steampowered.com",
+        "steamcommunity.com",
+        "epicgames.com",
+        "ea.com",
+        "ubisoft.com",
+        "battle.net",
+        "playstation.com",
+        "xbox.com",
+        "nintendo.com",
+        "roblox.com",
+        "minecraft.net",
+        "leagueoflegends.com",
+        "riotgames.com"
+      ]
+    },
+    {
+      "name": "News",
+      "domains": [
+        "cnn.com",
+        "bbc.com",
+        "bbc.co.uk",
+        "nytimes.com",
+        "theguardian.com",
+        "reuters.com",
+        "lemonde.fr",
+        "lefigaro.fr",
+        "spiegel.de",
+        "elpais.com",
+        "wsj.com",
+        "bloomberg.com",
+        "ft.com",
+        "foxnews.com",
+        "huffpost.com"
+      ]
+    },
+    {
+      "name": "Shopping",
+      "domains": [
+        "amazon.com",
+        "amazon.fr",
+        "amazon.co.uk",
+        "amazon.de",
+        "ebay.com",
+        "etsy.com",
+        "aliexpress.com",
+        "shein.com",
+        "temu.com",
+        "wayfair.com",
+        "target.com",
+        "walmart.com",
+        "bestbuy.com"
+      ]
+    },
+    {
+      "name": "Adult",
+      "domains": [
+        "pornhub.com",
+        "xvideos.com",
+        "xnxx.com",
+        "redtube.com",
+        "youporn.com",
+        "onlyfans.com",
+        "chaturbate.com",
+        "stripchat.com"
+      ]
+    },
+    {
+      "name": "Sports",
+      "domains": [
+        "espn.com",
+        "skysports.com",
+        "lequipe.fr",
+        "marca.com",
+        "as.com",
+        "goal.com",
+        "uefa.com",
+        "nba.com",
+        "nfl.com",
+        "mlb.com",
+        "nhl.com",
+        "fifa.com"
+      ]
+    },
+    {
+      "name": "Messaging",
+      "domains": [
+        "messenger.com",
+        "whatsapp.com",
+        "web.whatsapp.com",
+        "discord.com",
+        "slack.com",
+        "telegram.org",
+        "web.telegram.org",
+        "skype.com",
+        "signal.org"
+      ]
+    },
+    {
+      "name": "Entertainment",
+      "domains": [
+        "9gag.com",
+        "imgur.com",
+        "buzzfeed.com",
+        "memes.com",
+        "ifunny.co",
+        "giphy.com",
+        "tenor.com"
+      ]
+    },
+    {
+      "name": "AI Chatbots",
+      "domains": [
+        "chat.openai.com",
+        "chatgpt.com",
+        "claude.ai",
+        "gemini.google.com",
+        "bard.google.com",
+        "perplexity.ai",
+        "character.ai",
+        "poe.com",
+        "copilot.microsoft.com"
+      ]
+    },
+    {
+      "name": "Finance / Trading",
+      "domains": [
+        "robinhood.com",
+        "coinbase.com",
+        "binance.com",
+        "kraken.com",
+        "etrade.com",
+        "tradingview.com",
+        "ig.com",
+        "etoro.com",
+        "interactivebrokers.com"
+      ]
+    }
+  ]
+}

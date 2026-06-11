@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>StopMe.App.Core</RootNamespace>
+    <AssemblyName>StopMe.App.Core</AssemblyName>
+    <Description>StopMe UI core — ViewModels, service-connection abstractions, settings store. No WinUI dependencies.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StopMe.Core\StopMe.Core.csproj" />
+    <ProjectReference Include="..\StopMe.LocalApi\StopMe.LocalApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="StopMe.App" />
+    <InternalsVisibleTo Include="StopMe.App.Core.Tests" />
+  </ItemGroup>
+
+</Project>

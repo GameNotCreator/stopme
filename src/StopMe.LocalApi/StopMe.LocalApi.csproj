@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>StopMe.LocalApi</RootNamespace>
+    <AssemblyName>StopMe.LocalApi</AssemblyName>
+    <Description>StopMe local IPC contract: Named Pipes framing, request/response DTOs, client wrapper. Shared by Service and (future) UI + NativeHost.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StopMe.Core\StopMe.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="StopMe.Service" />
+    <InternalsVisibleTo Include="StopMe.Service.Tests" />
+  </ItemGroup>
+
+</Project>

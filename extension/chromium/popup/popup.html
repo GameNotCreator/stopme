@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>StopMe</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="popup">
+    <header>
+      <h2>StopMe</h2>
+      <span class="badge" id="connection-badge">…</span>
+    </header>
+
+    <section id="status" class="card status"></section>
+
+    <section id="sessions" class="card">
+      <span class="section-header">Active sessions</span>
+      <div id="sessions-list" class="sessions-list muted">Loading…</div>
+    </section>
+
+    <footer>
+      <button id="refresh" class="button" type="button">Refresh</button>
+      <a id="open-app" class="button ghost" href="#" target="_blank" rel="noopener">
+        Open StopMe
+      </a>
+    </footer>
+  </main>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

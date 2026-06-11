@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Blocked by StopMe</title>
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="blocked.css" />
+</head>
+<body>
+  <main class="page">
+    <div class="shield" aria-hidden="true">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3l7.5 3v5.5c0 4.6-3.1 7.9-7.5 9.5-4.4-1.6-7.5-4.9-7.5-9.5V6l7.5-3z" />
+      </svg>
+    </div>
+
+    <h1>This one can wait.</h1>
+
+    <p class="lead muted">
+      <strong id="site"></strong> is blocked while StopMe protects your focus.
+      It will be available again at <strong id="endsAt">soon</strong>.
+    </p>
+
+    <div class="back-pill">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 7v5.2l3.4 2" />
+      </svg>
+      <span>Back to it at <span id="remaining">soon</span></span>
+    </div>
+
+    <p class="quote">
+      &ldquo;You will never reach your destination if you stop and throw stones at every dog that barks.&rdquo;
+    </p>
+  </main>
+  <script src="blocked.js"></script>
+</body>
+</html>
